@@ -50,6 +50,7 @@ input::placeholder{color:var(--muted)}
 .chip.active{border-color:var(--accent);background:rgba(0,212,255,.12);color:var(--accent)}
 .chip.year-active{border-color:var(--green);background:rgba(0,230,118,.1);color:var(--green)}
 .chip.custom-active{border-color:var(--a3);background:rgba(255,107,53,.1);color:var(--a3)}
+.chip.max-active{border-color:var(--warn);background:linear-gradient(135deg,rgba(255,214,0,.12),rgba(255,107,53,.12));color:var(--warn);border-width:2px;box-shadow:0 0 12px rgba(255,214,0,.15)}
 
 .custom-dates{display:none;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
 .custom-dates.open{display:block}
@@ -208,10 +209,28 @@ tr:last-child td{border-bottom:none}
 .anomaly-high{background:rgba(255,107,53,.15);color:var(--a3);border:1px solid rgba(255,107,53,.3)}
 .anomaly-vhigh{background:rgba(255,0,0,.15);color:#ff4444;border:1px solid rgba(255,0,0,.3)}
 
+/* BILAN / YEAR SUMMARY */
+.year-cards{display:flex;gap:12px;overflow-x:auto;padding:4px 0;margin-bottom:14px;-webkit-overflow-scrolling:touch}
+.year-cards::-webkit-scrollbar{display:none}
+.year-card{min-width:200px;flex:1;background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;flex-shrink:0}
+.year-card.current{border-color:var(--accent);box-shadow:0 0 15px rgba(0,212,255,.08)}
+.year-card-year{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.year-card.current .year-card-year{background:linear-gradient(90deg,var(--accent),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.year-card-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.year-card-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.year-card-val{font-family:var(--mono);font-size:13px;font-weight:700}
+.year-card-delta{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:8px;margin-top:8px}
+.year-card-delta.up{background:rgba(255,107,53,.15);color:var(--a3)}
+.year-card-delta.down{background:rgba(0,230,118,.15);color:var(--green)}
+.yoy-table{width:100%;font-family:var(--mono);font-size:11px}
+.yoy-table td,.yoy-table th{padding:8px}
+.yoy-table th{font-size:9px}
+
 @media(max-width:500px){
   .kv{font-size:19px}
   .chip{font-size:11px;padding:7px 12px}
   .tariff-compare,.config-grid,.season-grid{grid-template-columns:1fr}
+  .year-card{min-width:170px}
 }
 </style>
 </head>
@@ -234,8 +253,10 @@ tr:last-child td{border-bottom:none}
     <button class="chip active" onclick="selectChip(30,this)">30 J</button>
     <button class="chip" onclick="selectChip(90,this)">3 M</button>
     <button class="chip" onclick="selectChip(365,this)">1 AN</button>
+    <button class="chip" onclick="selectYear(2023,this)">2023</button>
     <button class="chip" onclick="selectYear(2024,this)">2024</button>
     <button class="chip" onclick="selectYear(2025,this)">2025</button>
+    <button class="chip" onclick="selectMax(this)">🔋 MAX 3 ANS</button>
     <button class="chip" id="customChip" onclick="toggleCustom(this)">📅 Perso</button>
   </div>
   <div class="custom-dates" id="customDates">
@@ -276,6 +297,7 @@ tr:last-child td{border-bottom:none}
     <button class="tab" onclick="tab('Load')">⚡ Charge</button>
     <button class="tab" onclick="tab('Compare')">📅 Mensuel</button>
     <button class="tab" onclick="tab('Annual')">📊 Annuel</button>
+    <button class="tab" onclick="tab('Bilan')">🏆 Bilan</button>
     <button class="tab" onclick="tab('Budget')">💰 Budget</button>
   </div>
 
@@ -329,6 +351,45 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 
+  <!-- BILAN -->
+  <div class="panel" id="pBilan">
+    <div class="pt" style="margin-bottom:4px">🏆 Bilan Multi-Années</div>
+    <div class="ps" style="margin-bottom:14px">Résumé complet année par année · Comparaisons · Évolution</div>
+
+    <!-- Year summary cards -->
+    <div class="year-cards" id="yearCards"></div>
+
+    <!-- Year over year bar chart -->
+    <div class="stat-card full-width" style="margin-bottom:12px">
+      <div class="stat-title">📊 Comparaison annuelle — kWh par mois, toutes années</div>
+      <div class="cw" style="height:260px"><canvas id="cYoY"></canvas></div>
+    </div>
+
+    <!-- Year over year table -->
+    <div class="stat-card full-width" style="margin-bottom:12px">
+      <div class="stat-title">📋 Évolution année par année</div>
+      <div style="overflow-x:auto"><table class="yoy-table" id="yoyTable"></table></div>
+    </div>
+
+    <!-- Season comparison across years -->
+    <div class="stat-card full-width" style="margin-bottom:12px">
+      <div class="stat-title">🌡️ Saisons — évolution par année</div>
+      <div class="cw" style="height:240px"><canvas id="cSeasonYoY"></canvas></div>
+    </div>
+
+    <!-- Best / worst summary -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-title">🏅 Records</div>
+        <div id="bilanRecords"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">📈 Tendance globale</div>
+        <div id="bilanTrend"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- BUDGET -->
   <div class="panel" id="pBudget">
     <div class="pt" style="margin-bottom:14px">💰 Budget & Tarifs</div>
@@ -366,9 +427,10 @@ const B={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:fals
 function getCfg(){return{abo:+$('cfgAbo').value||151.20,cta:+$('cfgCTA').value||21.18,base:+$('cfgBase').value||0.2516,hp:+$('cfgHP').value||0.27,hc:+$('cfgHC').value||0.2068,budget:+$('cfgBudget').value||120};}
 
 // === PERIOD ===
-function selectChip(days,btn){customMode=false;activePeriod=days;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active'));btn.classList.add('active');$('customDates').classList.remove('open');const e=new Date();e.setDate(e.getDate()-1);const s=new Date(e);s.setDate(s.getDate()-days+1);$('ds').value=fmt(s);$('de').value=fmt(e);chk();}
-function selectYear(y,btn){customMode=false;activePeriod=365;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active'));btn.classList.add('year-active');$('customDates').classList.remove('open');const now=new Date();const end=(y===now.getFullYear())?new Date(now.getTime()-864e5):new Date(y,11,31);$('ds').value=`${y}-01-01`;$('de').value=fmt(end);chk();}
-function toggleCustom(btn){customMode=!customMode;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active'));if(customMode){btn.classList.add('custom-active');$('customDates').classList.add('open');}else{$('customDates').classList.remove('open');}}
+function selectChip(days,btn){customMode=false;activePeriod=days;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active','max-active'));btn.classList.add('active');$('customDates').classList.remove('open');const e=new Date();e.setDate(e.getDate()-1);const s=new Date(e);s.setDate(s.getDate()-days+1);$('ds').value=fmt(s);$('de').value=fmt(e);chk();}
+function selectYear(y,btn){customMode=false;activePeriod=365;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active','max-active'));btn.classList.add('year-active');$('customDates').classList.remove('open');const now=new Date();const end=(y===now.getFullYear())?new Date(now.getTime()-864e5):new Date(y,11,31);$('ds').value=`${y}-01-01`;$('de').value=fmt(end);chk();}
+function toggleCustom(btn){customMode=!customMode;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active','max-active'));if(customMode){btn.classList.add('custom-active');$('customDates').classList.add('open');}else{$('customDates').classList.remove('open');}}
+function selectMax(btn){customMode=false;activePeriod=1095;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active','max-active'));btn.classList.add('max-active');$('customDates').classList.remove('open');const e=new Date();e.setDate(e.getDate()-1);const s=new Date(e);s.setFullYear(s.getFullYear()-3);$('ds').value=fmt(s);$('de').value=fmt(e);chk();}
 function chk(){const t=$('tok').value.trim(),pdlV=$('pdl').value.trim(),el=$('ts');if(t.length>=20)el.innerHTML=`<span class="ok">✓ Token OK (${t.length} car.)</span>`;else if(t.length>0)el.innerHTML=`<span class="bad">⚠ Token trop court</span>`;else el.innerHTML='<span class="dim">○ Token non renseigné</span>';$('goBtn').disabled=!(pdlV.length>=12&&t.length>=20);}
 function setL(on,txt){if(txt)$('ldrT').textContent=txt;$('ldr').classList.toggle('on',on);}
 function setE(msg){$('errBox').textContent=msg?'❌ '+msg:'';$('errBox').classList.toggle('on',!!msg);}
@@ -393,14 +455,17 @@ function parseDaily(json){try{const r=json?.meter_reading?.interval_reading||jso
 function parseLoad(json){if(!json)return{};try{const r=json?.meter_reading?.interval_reading||json?.interval_reading||[];const m={};for(const x of r){const dt=new Date(x.date.replace(' ','T'));const d=fmt(dt);if(!m[d])m[d]=[];m[d].push({dt,w:parseFloat(x.value)});}for(const d of Object.keys(m))m[d].sort((a,b)=>a.dt-b.dt);return m;}catch{return{};}}
 
 // === DEMO ===
-function doDemo(){setL(true,'Génération démo 2 ans...');$('pdl').value='22516914714270';setTimeout(()=>{const d=genDemo();setL(false);render(d.daily,d.load,'22516914714270',d.s,d.e,'▶ DÉMO');},400);}
+function doDemo(){setL(true,'Génération démo 3 ans...');$('pdl').value='22516914714270';setTimeout(()=>{const d=genDemo();setL(false);render(d.daily,d.load,'22516914714270',d.s,d.e,'▶ DÉMO');},400);}
 function genDemo(){
   const seed=4270,rnd=(a,b,k)=>a+((seed*9301+k*49297+233)%10000)/10000*(b-a);
-  const daily=[],eD=new Date();eD.setDate(eD.getDate()-1);const sD=new Date(eD);sD.setFullYear(sD.getFullYear()-2);
+  const daily=[],eD=new Date();eD.setDate(eD.getDate()-1);const sD=new Date(eD);sD.setFullYear(sD.getFullYear()-3);
+  const currentY=eD.getFullYear();
   for(let i=0,d=new Date(sD);d<=eD;d.setDate(d.getDate()+1),i++){
     const sf=[1.4,1.3,1.1,0.9,0.8,0.7,0.65,0.7,0.8,0.95,1.2,1.45][d.getMonth()];
     const we=d.getDay()===0||d.getDay()===6;
-    const yf=d.getFullYear()===eD.getFullYear()?0.95:1;
+    // Yearly improvement: each year slightly better
+    const yearDiff=currentY-d.getFullYear();
+    const yf=1+yearDiff*0.04; // older years consumed ~4% more per year
     let val=+(Math.max(1,(rnd(8,14,i)+(we?3:0)+rnd(-1.5,1.5,i*7))*sf*yf)).toFixed(2);
     if(i%73===0)val=+(val*2.2).toFixed(2);if(i%127===0)val=+(val*1.9).toFixed(2);
     daily.push({date:new Date(d),kwh:val});
@@ -422,8 +487,8 @@ function render(daily,loadByDay,pdl,s,e,src){
   $('k4').innerHTML=`${cost.toFixed(0)}<span class="ku">€</span>`;
   buildDB(daily.length);drawD(Math.min(activePeriod,daily.length));
   buildLB();if(lDays.length)drawL(lDays[lDays.length-1]);
-  drawC();buildInsights(daily,avg);buildAnnual(daily);buildBudget(daily);
-  $('dash').style.display='block';setTimeout(()=>$('dash').scrollIntoView({behavior:'smooth'}),100);
+  drawC();buildInsights(daily,avg);buildAnnual(daily);buildBilan(daily);buildBudget(daily);
+  $('dash').style.display='block';setTimeout(()=>{$('dash').scrollIntoView({behavior:'smooth'});if(activePeriod>=1095)tab('Bilan');},100);
 }
 
 // === INSIGHTS ===
@@ -570,9 +635,146 @@ function buildTrend(daily){
   CH['trend']=new Chart($('cTrend').getContext('2d'),{type:'line',data:{labels:allL,datasets:[{label:'Réel',data:[...vals,...Array(3).fill(null)],borderColor:'#00d4ff',borderWidth:2,tension:.3,pointRadius:2,fill:false},{label:'Prévision',data:[...Array(n).fill(null),...fVals],borderColor:'#ff6b35',borderDash:[5,3],borderWidth:2,tension:.3,pointRadius:3,fill:false},{label:'Tendance',data:tLine,borderColor:'rgba(168,85,247,.4)',borderDash:[3,3],borderWidth:1,pointRadius:0,fill:false}]},options:{...B,plugins:{...B.plugins,legend:{display:true,position:'top',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:10,padding:8}}}}});
 }
 
+// ========== BILAN TAB ==========
+function buildBilan(daily){
+  const cfg=getCfg();
+  const years=[...new Set(daily.map(d=>d.date.getFullYear()))].sort();
+  if(years.length<1)return;
+
+  // --- Per-year stats ---
+  const yStats=years.map(y=>{
+    const yD=daily.filter(d=>d.date.getFullYear()===y);
+    const tot=yD.reduce((a,d)=>a+d.kwh,0);
+    const avg=yD.length?tot/yD.length:0;
+    const peak=yD.reduce((a,d)=>d.kwh>a.kwh?d:a,yD[0]);
+    const cost=tot*cfg.base+cfg.abo+cfg.cta;
+    return{y,days:yD.length,tot,avg,peak,cost,data:yD};
+  });
+
+  // --- Year summary cards ---
+  const currentYear=new Date().getFullYear();
+  $('yearCards').innerHTML=yStats.map((s,i)=>{
+    const prev=i>0?yStats[i-1]:null;
+    const deltaPct=prev?((s.tot-prev.tot)/prev.tot*100).toFixed(1):null;
+    const isCurrent=s.y===currentYear;
+    return`<div class="year-card ${isCurrent?'current':''}">
+      <div class="year-card-year">${s.y}</div>
+      <div class="year-card-row"><span class="year-card-label">Total</span><span class="year-card-val v">${s.tot.toFixed(0)} kWh</span></div>
+      <div class="year-card-row"><span class="year-card-label">Moy/jour</span><span class="year-card-val">${s.avg.toFixed(1)} kWh</span></div>
+      <div class="year-card-row"><span class="year-card-label">Pic</span><span class="year-card-val" style="color:var(--a3)">${s.peak.kwh} kWh</span></div>
+      <div class="year-card-row"><span class="year-card-label">Coût</span><span class="year-card-val">${Math.round(s.cost)} €</span></div>
+      <div class="year-card-row"><span class="year-card-label">Jours</span><span class="year-card-val" style="color:var(--muted)">${s.days}j</span></div>
+      ${deltaPct!==null?`<div class="year-card-delta ${deltaPct>0?'up':'down'}">${deltaPct>0?'▲':'▼'} ${Math.abs(deltaPct)}% vs ${s.y-1}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // --- Year-over-year bar chart (months side by side) ---
+  kill('yoy');
+  const colors=['#5a6480','#00d4ff','#00e676','#ff6b35','#a855f7'];
+  const datasets=yStats.map((s,i)=>{
+    const byM=Array(12).fill(0);
+    s.data.forEach(d=>{byM[d.date.getMonth()]+=d.kwh;});
+    return{label:''+s.y,data:byM.map(v=>+v.toFixed(0)),backgroundColor:colors[i%colors.length]+'99',borderColor:colors[i%colors.length],borderWidth:1,borderRadius:3};
+  });
+  CH['yoy']=new Chart($('cYoY').getContext('2d'),{type:'bar',data:{labels:MN,datasets},options:{...B,plugins:{...B.plugins,legend:{display:true,position:'top',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:10,padding:10}},tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y} kWh`}}}}});
+
+  // --- Year-over-year table ---
+  let th='<thead><tr><th>Indicateur</th>';years.forEach(y=>{th+=`<th>${y}</th>`;});
+  if(years.length>1)th+='<th>Δ total</th>';
+  th+='</tr></thead><tbody>';
+  const rows=[
+    {label:'Total kWh',fn:s=>s.tot.toFixed(0),unit:' kWh'},
+    {label:'Moy/jour',fn:s=>s.avg.toFixed(1),unit:' kWh'},
+    {label:'Pic max',fn:s=>s.peak.kwh.toFixed(1),unit:' kWh'},
+    {label:'Coût annuel',fn:s=>Math.round(s.cost)+'€',unit:''},
+    {label:'Jours data',fn:s=>''+s.days,unit:'j'}
+  ];
+  let tbody='';
+  rows.forEach(r=>{
+    tbody+='<tr><td style="color:var(--muted)">'+r.label+'</td>';
+    yStats.forEach(s=>{tbody+=`<td class="v">${r.fn(s)}</td>`;});
+    if(years.length>1){
+      const first=yStats[0],last=yStats[yStats.length-1];
+      if(r.label==='Total kWh'){
+        const d=((last.tot-first.tot)/first.tot*100).toFixed(1);
+        const col=d>0?'var(--a3)':'var(--green)';
+        tbody+=`<td style="color:${col}">${d>0?'▲':'▼'} ${Math.abs(d)}%</td>`;
+      } else if(r.label==='Moy/jour'){
+        const d=((last.avg-first.avg)/first.avg*100).toFixed(1);
+        const col=d>0?'var(--a3)':'var(--green)';
+        tbody+=`<td style="color:${col}">${d>0?'▲':'▼'} ${Math.abs(d)}%</td>`;
+      } else if(r.label==='Coût annuel'){
+        const d=last.cost-first.cost;
+        const col=d>0?'var(--a3)':'var(--green)';
+        tbody+=`<td style="color:${col}">${d>0?'+':''}${Math.round(d)}€</td>`;
+      } else {tbody+='<td>—</td>';}
+    }
+    tbody+='</tr>';
+  });
+  $('yoyTable').innerHTML=th+tbody+'</tbody>';
+
+  // --- Season comparison across years ---
+  kill('seasonYoY');
+  const SN=['Hiver','Printemps','Été','Automne'];
+  const SM=[[11,0,1],[2,3,4],[5,6,7],[8,9,10]];
+  const seasonDS=yStats.map((s,i)=>{
+    const vals=SM.map(months=>{
+      const sD=s.data.filter(d=>months.includes(d.date.getMonth()));
+      return sD.length?+(sD.reduce((a,d)=>a+d.kwh,0)/sD.length).toFixed(1):0;
+    });
+    return{label:''+s.y,data:vals,backgroundColor:colors[i%colors.length]+'99',borderColor:colors[i%colors.length],borderWidth:1,borderRadius:3};
+  });
+  CH['seasonYoY']=new Chart($('cSeasonYoY').getContext('2d'),{type:'bar',data:{labels:SN.map((n,i)=>['❄️','🌸','☀️','🍂'][i]+' '+n),datasets:seasonDS},options:{...B,plugins:{...B.plugins,legend:{display:true,position:'top',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:10,padding:10}},tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y} kWh/j moy`}}},scales:{...B.scales,y:{...B.scales.y,title:{display:true,text:'kWh/j moy',color:'#5a6480',font:{family:'Space Mono',size:9}}}}}});
+
+  // --- Records ---
+  const allDays=[...daily].sort((a,b)=>b.kwh-a.kwh);
+  const bestDay=[...daily].sort((a,b)=>a.kwh-b.kwh)[0];
+  const worstDay=allDays[0];
+  const bestMonth=getBestWorstMonth(daily,'best');
+  const worstMonth=getBestWorstMonth(daily,'worst');
+  $('bilanRecords').innerHTML=`
+    <div style="font-family:var(--mono);font-size:11px;line-height:2">
+      <div>🟢 <span style="color:var(--green)">Jour le + sobre</span><br><span style="color:var(--muted)">${fr(bestDay.date)}</span> · <span class="v">${bestDay.kwh} kWh</span></div>
+      <div style="margin-top:8px">🔴 <span style="color:var(--a3)">Jour le + gourmand</span><br><span style="color:var(--muted)">${fr(worstDay.date)}</span> · <span class="v">${worstDay.kwh} kWh</span></div>
+      <div style="margin-top:8px">📅 <span style="color:var(--green)">Meilleur mois</span><br><span style="color:var(--muted)">${bestMonth.label}</span> · <span class="v">${bestMonth.avg.toFixed(1)} kWh/j</span></div>
+      <div style="margin-top:8px">📅 <span style="color:var(--a3)">Pire mois</span><br><span style="color:var(--muted)">${worstMonth.label}</span> · <span class="v">${worstMonth.avg.toFixed(1)} kWh/j</span></div>
+    </div>`;
+
+  // --- Global trend ---
+  if(yStats.length>=2){
+    const first=yStats[0],last=yStats[yStats.length-1];
+    const totDelta=((last.tot/(last.days/365)-first.tot/(first.days/365))/(first.tot/(first.days/365))*100).toFixed(1);
+    const costDelta=last.cost-first.cost;
+    const improving=totDelta<0;
+    $('bilanTrend').innerHTML=`
+      <div style="font-family:var(--mono);font-size:11px;line-height:2">
+        <div style="font-size:28px;font-weight:800;color:${improving?'var(--green)':'var(--a3)'};margin-bottom:6px">${improving?'📉':'📈'} ${totDelta>0?'+':''}${totDelta}%</div>
+        <div style="color:var(--muted)">Évolution annualisée<br>${first.y} → ${last.y}</div>
+        <div style="margin-top:8px;color:${improving?'var(--green)':'var(--a3)'}">
+          ${improving?'✅ Votre consommation baisse':'⚠️ Votre consommation augmente'}
+        </div>
+        <div style="margin-top:4px;color:var(--muted)">Impact coût : <span style="color:${costDelta>0?'var(--a3)':'var(--green)'}">${costDelta>0?'+':''}${Math.round(costDelta)}€/an</span></div>
+        <div style="margin-top:8px;color:var(--muted);font-size:10px">
+          ${first.y}: ${(first.tot/(first.days/365)).toFixed(0)} kWh/an<br>
+          ${last.y}: ${(last.tot/(last.days/365)).toFixed(0)} kWh/an
+        </div>
+      </div>`;
+  } else {
+    $('bilanTrend').innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">2 années minimum pour la tendance</div>';
+  }
+}
+
+function getBestWorstMonth(daily,type){
+  const byM={};
+  daily.forEach(d=>{const k=MN[d.date.getMonth()]+' '+d.date.getFullYear();if(!byM[k])byM[k]={sum:0,cnt:0,label:k};byM[k].sum+=d.kwh;byM[k].cnt++;});
+  const arr=Object.values(byM).filter(m=>m.cnt>=15).map(m=>({...m,avg:m.sum/m.cnt}));
+  if(!arr.length)return{label:'—',avg:0};
+  return type==='best'?arr.reduce((a,b)=>b.avg<a.avg?b:a):arr.reduce((a,b)=>b.avg>a.avg?b:a);
+}
+
 // ========== BUDGET TAB ==========
 function buildBudget(daily){buildTariffCompare(daily);buildBudgetMonthly(daily);buildInvoice(daily);}
-function recalcBudget(){if(!AD.daily?.length)return;const cfg=getCfg(),tot=AD.daily.reduce((a,d)=>a+d.kwh,0);$('k4').innerHTML=`${(tot*cfg.base).toFixed(0)}<span class="ku">€</span>`;buildBudget(AD.daily);const avg=tot/AD.daily.length,projCost=avg*365*cfg.base+cfg.abo+cfg.cta;$('projNum').innerHTML=`${Math.round(projCost)}<span style="font-size:14px;color:var(--muted);font-weight:400"> €</span>`;$('projLabel').textContent=`${Math.round(avg*365)} kWh/an`;$('projDesc').textContent=`${avg.toFixed(1)} kWh/j · Abo+CTA inclus`;drawC();}
+function recalcBudget(){if(!AD.daily?.length)return;const cfg=getCfg(),tot=AD.daily.reduce((a,d)=>a+d.kwh,0);$('k4').innerHTML=`${(tot*cfg.base).toFixed(0)}<span class="ku">€</span>`;buildBudget(AD.daily);buildBilan(AD.daily);const avg=tot/AD.daily.length,projCost=avg*365*cfg.base+cfg.abo+cfg.cta;$('projNum').innerHTML=`${Math.round(projCost)}<span style="font-size:14px;color:var(--muted);font-weight:400"> €</span>`;$('projLabel').textContent=`${Math.round(avg*365)} kWh/an`;$('projDesc').textContent=`${avg.toFixed(1)} kWh/j · Abo+CTA inclus`;drawC();}
 
 function buildTariffCompare(daily){
   const cfg=getCfg(),avg=daily.reduce((a,d)=>a+d.kwh,0)/daily.length,aKwh=avg*365;
@@ -620,7 +822,7 @@ function exportJSON(){
 function dl(content,name,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=name;a.click();}
 
 // === TABS ===
-const TN=['Daily','Insights','Load','Compare','Annual','Budget'];
+const TN=['Daily','Insights','Load','Compare','Annual','Bilan','Budget'];
 function tab(name){document.querySelectorAll('#mainTabs .tab').forEach((t,i)=>t.classList.toggle('active',TN[i]===name));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$('p'+name).classList.add('active');}
 
 // === INIT ===
