@@ -444,11 +444,42 @@ async function doReal(){
   setE('');setL(true,'Validation du token...');
   try{
     const vr=await apiGet(`https://www.myelectricaldata.fr/valid_access/${pdl}/`,tok);if(!vr.ok){const j=await vr.json().catch(()=>({}));throw new Error(j.detail||`Accès refusé (${vr.status})`);}
-    setL(true,'Chargement conso journalière...');
-    const dr=await apiGet(`https://www.myelectricaldata.fr/daily_consumption/${pdl}/start/${s}/end/${e}/cache/`,tok);if(!dr.ok)throw new Error(`Erreur données (${dr.status})`);const dj=await dr.json();
-    setL(true,'Chargement courbe de charge...');let lj=null;
+
+    // Split date range into chunks of max 365 days (API limit)
+    const chunks=[];
+    let cs=new Date(s+'T00:00:00'),ce=new Date(e+'T00:00:00');
+    while(cs<ce){
+      let chunkEnd=new Date(cs);chunkEnd.setDate(chunkEnd.getDate()+364);
+      if(chunkEnd>ce)chunkEnd=ce;
+      chunks.push({s:fmt(cs),e:fmt(chunkEnd)});
+      cs=new Date(chunkEnd);cs.setDate(cs.getDate()+1);
+    }
+
+    // Fetch daily data in chunks
+    let allDaily=[];
+    for(let i=0;i<chunks.length;i++){
+      const c=chunks[i];
+      setL(true,`Chargement conso ${i+1}/${chunks.length} (${c.s.slice(0,4)})...`);
+      try{
+        const dr=await apiGet(`https://www.myelectricaldata.fr/daily_consumption/${pdl}/start/${c.s}/end/${c.e}/cache/`,tok);
+        if(dr.ok){const dj=await dr.json();allDaily=allDaily.concat(parseDaily(dj));}
+        else{console.warn(`Chunk ${c.s}-${c.e} failed: ${dr.status}`);}
+      }catch(err){console.warn(`Chunk ${c.s}-${c.e} error:`,err);}
+    }
+
+    if(!allDaily.length)throw new Error('Aucune donnée récupérée. Essayez une période plus courte.');
+
+    // Deduplicate by date and sort
+    const byDate={};allDaily.forEach(d=>{const k=fmt(d.date);if(!byDate[k]||d.kwh>0)byDate[k]=d;});
+    allDaily=Object.values(byDate).sort((a,b)=>a.date-b.date);
+
+    // Load curve: last 7 days only
+    setL(true,'Chargement courbe de charge (7j)...');let lj=null;
     try{const lsd=new Date(e);lsd.setDate(lsd.getDate()-6);const lr=await apiGet(`https://www.myelectricaldata.fr/consumption_load_curve/${pdl}/start/${fmt(lsd)}/end/${e}/cache/`,tok);if(lr.ok)lj=await lr.json();}catch{}
-    setL(false);render(parseDaily(dj),parseLoad(lj),pdl,s,e,'🟢 DONNÉES RÉELLES');
+
+    setL(false);
+    const realStart=fmt(allDaily[0].date),realEnd=fmt(allDaily[allDaily.length-1].date);
+    render(allDaily,parseLoad(lj),pdl,realStart,realEnd,`🟢 RÉEL · ${allDaily.length}j`);
   }catch(err){setL(false);setE(err.message||'Erreur');}
 }
 function parseDaily(json){try{const r=json?.meter_reading?.interval_reading||json?.interval_reading||[];return r.map(x=>({date:pD(x.date),kwh:+Math.max(0,parseFloat(x.value)/1000).toFixed(3)})).filter(d=>!isNaN(d.kwh)).sort((a,b)=>a.date-b.date);}catch{return[];}}
@@ -535,7 +566,7 @@ function buildAnomalies(daily,avg){
 }
 
 // === DAILY CHART ===
-function buildDB(total){const c=$('dBtns'),opts=[7,14,30,90,365].filter(x=>x<=total);if(!opts.includes(total)&&total<365)opts.push(total);const def=Math.min(activePeriod,total);c.innerHTML=opts.map(n=>`<button class="pbtn ${n===def?'active':''}" onclick="drawD(${n},this)">${n>=365?'1AN':n+'J'}</button>`).join('');}
+function buildDB(total){const c=$('dBtns'),opts=[7,14,30,90,365].filter(x=>x<=total);if(total>365)opts.push(total);const def=Math.min(activePeriod,total);c.innerHTML=opts.map(n=>`<button class="pbtn ${n===def?'active':''}" onclick="drawD(${n},this)">${n>=1000?'TOUT':n>=365?'1AN':n+'J'}</button>`).join('');}
 function drawD(n,btn){if(btn){document.querySelectorAll('#dBtns .pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}kill('d');const sl=AD.daily.slice(-n),labels=sl.map(d=>fr(d.date)),vals=sl.map(d=>d.kwh),avg=vals.reduce((a,v)=>a+v,0)/vals.length;CH['d']=new Chart($('cD').getContext('2d'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:vals.map(v=>v>avg*1.3?'rgba(255,107,53,.75)':'rgba(0,212,255,.6)'),borderColor:vals.map(v=>v>avg*1.3?'#ff6b35':'#00d4ff'),borderWidth:1,borderRadius:3},{type:'line',data:vals.map(()=>+avg.toFixed(2)),borderColor:'rgba(255,107,53,.5)',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false,tension:0}]},options:{...B,plugins:{...B.plugins,tooltip:{...B.plugins.tooltip,callbacks:{label:c=>c.datasetIndex===0?` ${c.parsed.y} kWh`:` Moy: ${avg.toFixed(2)} kWh`}}}}});}
 
 // === LOAD CHART ===
