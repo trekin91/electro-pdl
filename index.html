@@ -187,15 +187,15 @@ async function doReal(){
   if(!s||!e){preset(30);s=$('ds').value;e=$('de').value;}
   setE('');setL(true,'Validation du token...');
   try{
-    const vr=await fetch(`https://www.myelectricaldata.fr/valid_access/${pdl}/`,{headers:{'Authorization':tok}});
+    const vr=await fetch(`https://corsproxy.io/?url=https://www.myelectricaldata.fr/valid_access/${pdl}/`,{headers:{'Authorization':tok}});
     if(!vr.ok){const j=await vr.json().catch(()=>({}));throw new Error(j.detail||`Accès refusé (${vr.status}) — vérifiez PDL et token`);}
     setL(true,'Chargement consommation journalière...');
-    const dr=await fetch(`https://www.myelectricaldata.fr/daily_consumption/${pdl}/start/${s}/end/${e}/cache/`,{headers:{'Authorization':tok}});
+    const dr=await fetch(`https://corsproxy.io/?url=https://www.myelectricaldata.fr/daily_consumption/${pdl}/start/${s}/end/${e}/cache/`,{headers:{'Authorization':tok}});
     if(!dr.ok)throw new Error(`Erreur données (${dr.status})`);
     const dj=await dr.json();
     setL(true,'Chargement courbe de charge...');
     let lj=null;
-    try{const lsd=new Date(e);lsd.setDate(lsd.getDate()-6);const lr=await fetch(`https://www.myelectricaldata.fr/consumption_load_curve/${pdl}/start/${fmt(lsd)}/end/${e}/cache/`,{headers:{'Authorization':tok}});if(lr.ok)lj=await lr.json();}catch{}
+    try{const lsd=new Date(e);lsd.setDate(lsd.getDate()-6);const lr=await fetch(`https://corsproxy.io/?url=https://www.myelectricaldata.fr/consumption_load_curve/${pdl}/start/${fmt(lsd)}/end/${e}/cache/`,{headers:{'Authorization':tok}});if(lr.ok)lj=await lr.json();}catch{}
     setL(false);
     render(pDaily(dj),pLoad(lj),pdl,s,e,'🟢 DONNÉES RÉELLES');
   }catch(err){
