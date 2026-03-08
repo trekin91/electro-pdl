@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>ÉlectroPDL</title>
+<title>ÉlectroPDL v2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -11,13 +11,13 @@
   --bg:#0a0c10;--bg2:#10141c;--bg3:#1a1f2e;--border:#222840;
   --accent:#00d4ff;--a2:#0066ff;--a3:#ff6b35;--green:#00e676;
   --text:#e8edf5;--muted:#5a6480;--mono:'Space Mono',monospace;--sans:'Syne',sans-serif;
+  --warn:#ffd600;--purple:#a855f7;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overscroll-behavior:none}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none;z-index:0}
 .app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 14px 60px}
 
-/* HEADER */
 header{display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px;border-bottom:1px solid var(--border);margin-bottom:20px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--a2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
@@ -25,23 +25,20 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .logo-text span{color:var(--accent)}
 .badge{font-family:var(--mono);font-size:9px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--accent);padding:3px 7px;border-radius:4px;white-space:nowrap}
 
-/* CARD */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:16px}
 .sec-label{font-family:var(--mono);font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
 
-/* INPUTS */
 .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
 .field label{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px}
-input[type=text],input[type=password]{
+input[type=text],input[type=password],input[type=number]{
   background:var(--bg3);border:2px solid var(--border);border-radius:10px;
   color:var(--text);font-family:var(--mono);font-size:15px;
   padding:12px 14px;outline:none;transition:border-color .2s;width:100%;
   -webkit-appearance:none;appearance:none;
 }
-input[type=text]:focus,input[type=password]:focus{border-color:var(--accent)}
+input[type=text]:focus,input[type=password]:focus,input[type=number]:focus{border-color:var(--accent)}
 input::placeholder{color:var(--muted)}
 
-/* PERIOD SELECTOR — chips */
 .period-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;margin-top:14px}
 .period-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .chip{
@@ -51,13 +48,10 @@ input::placeholder{color:var(--muted)}
 }
 .chip:hover{border-color:var(--accent);color:var(--accent)}
 .chip.active{border-color:var(--accent);background:rgba(0,212,255,.12);color:var(--accent)}
+.chip.year-active{border-color:var(--green);background:rgba(0,230,118,.1);color:var(--green)}
 .chip.custom-active{border-color:var(--a3);background:rgba(255,107,53,.1);color:var(--a3)}
 
-/* CUSTOM DATE */
-.custom-dates{
-  display:none;background:var(--bg3);border:1px solid var(--border);
-  border-radius:12px;padding:14px;margin-bottom:12px;
-}
+.custom-dates{display:none;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
 .custom-dates.open{display:block}
 .date-row{display:flex;gap:10px;flex-wrap:wrap}
 .date-row .field{flex:1;min-width:130px}
@@ -70,7 +64,6 @@ input[type=date]{
 input[type=date]:focus{border-color:var(--a3)}
 .date-hint{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:6px}
 
-/* BUTTONS */
 .btn-row{display:flex;gap:10px;margin-top:4px}
 .btn{
   flex:1;background:linear-gradient(135deg,var(--a2),var(--accent));
@@ -86,11 +79,9 @@ input[type=date]:focus{border-color:var(--a3)}
   font-weight:700;font-size:14px;padding:14px 18px;border-radius:12px;
 }
 
-/* STATUS */
 .tok-status{font-family:var(--mono);font-size:11px;margin:8px 0 4px;min-height:16px}
 .ok{color:var(--green)}.bad{color:var(--a3)}.dim{color:var(--muted)}
 
-/* LOADER */
 .loader{display:none;align-items:center;gap:8px;padding:10px 0;font-family:var(--mono);font-size:11px;color:var(--accent)}
 .loader.on{display:flex}
 .dots span{width:5px;height:5px;background:var(--accent);border-radius:50%;display:inline-block;animation:bk 1.2s infinite;margin-right:2px}
@@ -101,7 +92,6 @@ input[type=date]:focus{border-color:var(--a3)}
 .note{background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:10px;padding:11px 14px;font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.7;margin-top:12px}
 .note a{color:var(--accent)}
 
-/* DASHBOARD */
 #dash{display:none}
 .pdl-bar{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pdl-chip{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:3px 10px;color:var(--accent);letter-spacing:1px;font-size:11px}
@@ -109,7 +99,6 @@ input[type=date]:focus{border-color:var(--a3)}
 .dot{width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block;box-shadow:0 0 5px var(--green);animation:pl 2s infinite;flex-shrink:0}
 @keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* KPI GRID */
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 12px;position:relative;overflow:hidden}
 .kpi::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent)}
@@ -119,13 +108,11 @@ input[type=date]:focus{border-color:var(--a3)}
 .ku{font-size:11px;color:var(--muted);margin-left:2px;font-weight:400}
 .ks{font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:4px;line-height:1.3}
 
-/* TABS */
 .tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--bg2);padding:4px;border-radius:12px;border:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tabs::-webkit-scrollbar{display:none}
 .tab{background:transparent;border:none;border-radius:9px;color:var(--muted);cursor:pointer;font-family:var(--sans);font-size:11px;font-weight:700;padding:8px 14px;transition:all .2s;white-space:nowrap;flex-shrink:0}
 .tab.active{background:var(--bg3);color:var(--accent);border:1px solid var(--border)}
 
-/* PANELS */
 .panel{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;display:none}
 .panel.active{display:block}
 .ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px;flex-wrap:wrap}
@@ -136,7 +123,6 @@ input[type=date]:focus{border-color:var(--a3)}
 .pbtn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-family:var(--mono);font-size:10px;padding:4px 8px;transition:all .2s}
 .pbtn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,.08)}
 
-/* STAT CARDS */
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px}
 .stat-title{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
@@ -144,51 +130,96 @@ input[type=date]:focus{border-color:var(--a3)}
 .stat-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px}
 .full-width{grid-column:1/-1}
 
-/* HEATMAP */
-.heatmap{overflow-x:auto;margin-top:4px}
-.hm-grid{display:grid;gap:2px;font-family:var(--mono);font-size:9px;min-width:280px}
-.hm-row{display:flex;gap:2px;align-items:center}
-.hm-label{width:28px;color:var(--muted);font-size:9px;text-align:right;padding-right:4px;flex-shrink:0}
-.hm-cell{flex:1;height:18px;border-radius:2px;min-width:8px;cursor:default;transition:opacity .15s}
-.hm-cell:hover{opacity:.7}
-.hm-hours{display:flex;gap:2px;margin-left:32px;margin-bottom:2px}
-.hm-hour{flex:1;font-family:var(--mono);font-size:8px;color:var(--muted);text-align:center;min-width:8px}
-
-/* BAR INLINE */
 .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .bar-label{font-family:var(--mono);font-size:10px;color:var(--muted);width:32px;flex-shrink:0;text-align:right}
-.bar-track{flex:1;background:var(--bg3);border-radius:3px;height:8px;overflow:hidden}
+.bar-track{flex:1;background:var(--bg);border-radius:3px;height:8px;overflow:hidden}
 .bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
-.bar-val{font-family:var(--mono);font-size:10px;color:var(--text);width:52px;text-align:right;flex-shrink:0}
+.bar-val{font-family:var(--mono);font-size:10px;color:var(--text);width:58px;text-align:right;flex-shrink:0}
 
-/* TABLE */
 table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
 th{color:var(--muted);font-size:9px;letter-spacing:1px;text-align:left;padding:7px 8px;border-bottom:1px solid var(--border);text-transform:uppercase}
 td{padding:9px 8px;border-bottom:1px solid rgba(30,37,53,.4)}
 tr:last-child td{border-bottom:none}
 .v{color:var(--accent);font-weight:700}
 
-/* EFFICIENCY SCORE */
 .score-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0}
 .score-num{font-size:42px;font-weight:800;letter-spacing:-2px}
 .score-label{font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:2px}
 .score-bar{width:100%;background:var(--bg3);border-radius:4px;height:6px;margin-top:10px;overflow:hidden}
 .score-fill{height:100%;border-radius:4px;transition:width 1s ease}
 
-@media(max-width:400px){
+/* Calendar heatmap */
+.cal-heatmap{overflow-x:auto;padding:4px 0}
+.cal-wrap{min-width:680px}
+.cal-months{display:flex;margin-left:28px;margin-bottom:2px;gap:0}
+.cal-month-lbl{font-family:var(--mono);font-size:8px;color:var(--muted)}
+.cal-grid{display:flex;gap:0}
+.cal-labels{display:flex;flex-direction:column;gap:2px;margin-right:4px}
+.cal-day-label{font-family:var(--mono);font-size:8px;color:var(--muted);height:11px;line-height:11px;text-align:right;width:22px}
+.cal-weeks{display:flex;gap:2px}
+.cal-week{display:flex;flex-direction:column;gap:2px}
+.cal-cell{width:11px;height:11px;border-radius:2px;cursor:default;position:relative}
+.cal-cell:hover{outline:1px solid var(--text);outline-offset:-1px}
+.cal-cell[data-tip]:hover::after{
+  content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:3px 6px;
+  font-family:var(--mono);font-size:9px;color:var(--text);white-space:nowrap;z-index:10;pointer-events:none;
+}
+.cal-legend{display:flex;align-items:center;gap:4px;margin-top:6px;margin-left:28px;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.cal-legend-cell{width:11px;height:11px;border-radius:2px}
+
+/* Season cards */
+.season-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.season-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;overflow:hidden}
+.season-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px}
+.season-card.winter::before{background:linear-gradient(90deg,#4fc3f7,#0288d1)}
+.season-card.spring::before{background:linear-gradient(90deg,#66bb6a,#43a047)}
+.season-card.summer::before{background:linear-gradient(90deg,#ffd54f,#ff8f00)}
+.season-card.autumn::before{background:linear-gradient(90deg,#ff8a65,#d84315)}
+.season-name{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.season-val{font-size:20px;font-weight:800;margin-top:4px}
+
+/* Tariff cards */
+.tariff-compare{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px}
+.tariff-card{background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all .2s}
+.tariff-card.best{border-color:var(--green);box-shadow:0 0 20px rgba(0,230,118,.08)}
+.tariff-name{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.tariff-price{font-size:24px;font-weight:800}
+.tariff-sub{font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:3px}
+.tariff-badge{display:inline-block;background:rgba(0,230,118,.15);color:var(--green);font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:10px;margin-top:6px}
+
+.config-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.config-grid .field{margin-bottom:0}
+.config-grid input[type=number]{font-size:12px;padding:10px 12px}
+
+.budget-track{width:100%;height:16px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative}
+.budget-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.budget-marker{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--text);border-radius:1px;opacity:.5}
+
+.export-btns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.export-btn{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:var(--mono);font-size:11px;padding:10px 16px;
+  cursor:pointer;transition:all .2s;font-weight:700;
+}
+.export-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.anomaly-tag{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:3px;margin-left:4px}
+.anomaly-high{background:rgba(255,107,53,.15);color:var(--a3);border:1px solid rgba(255,107,53,.3)}
+.anomaly-vhigh{background:rgba(255,0,0,.15);color:#ff4444;border:1px solid rgba(255,0,0,.3)}
+
+@media(max-width:500px){
   .kv{font-size:19px}
   .chip{font-size:11px;padding:7px 12px}
+  .tariff-compare,.config-grid,.season-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 <div class="app">
 <header>
-  <div class="logo">
-    <div class="logo-icon">⚡</div>
-    <div class="logo-text">Électro<span>PDL</span></div>
-  </div>
-  <div class="badge">MyElectricalData</div>
+  <div class="logo"><div class="logo-icon">⚡</div><div class="logo-text">Électro<span>PDL</span></div></div>
+  <div class="badge">v2 · MyElectricalData</div>
 </header>
 
 <div class="card">
@@ -203,6 +234,8 @@ tr:last-child td{border-bottom:none}
     <button class="chip active" onclick="selectChip(30,this)">30 J</button>
     <button class="chip" onclick="selectChip(90,this)">3 M</button>
     <button class="chip" onclick="selectChip(365,this)">1 AN</button>
+    <button class="chip" onclick="selectYear(2024,this)">2024</button>
+    <button class="chip" onclick="selectYear(2025,this)">2025</button>
     <button class="chip" id="customChip" onclick="toggleCustom(this)">📅 Perso</button>
   </div>
   <div class="custom-dates" id="customDates">
@@ -212,7 +245,6 @@ tr:last-child td{border-bottom:none}
     </div>
     <div class="date-hint">↑ Sélectionnez la plage personnalisée</div>
   </div>
-
   <div class="btn-row">
     <button class="btn" id="goBtn" onclick="doReal()" disabled>⚡ Analyser</button>
     <button class="btn btn-demo" onclick="doDemo()">▶ Démo</button>
@@ -222,7 +254,7 @@ tr:last-child td{border-bottom:none}
   <div class="note">🔒 Token jamais stocké · appels directs vers <a href="https://www.myelectricaldata.fr" target="_blank">myelectricaldata.fr</a><br>Pas de token ? <a href="https://mon-compte-particulier.enedis.fr/dataconnect/v1/oauth2/authorize?client_id=_h7zLaRr2INxqBI8jhDUQXsa_G4a&duration=P36M&response_type=code" target="_blank">👉 Obtenir gratuitement</a></div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- =========== DASHBOARD =========== -->
 <div id="dash">
   <div class="pdl-bar">
     <span class="dot"></span>
@@ -231,89 +263,46 @@ tr:last-child td{border-bottom:none}
     <span id="perL" style="color:var(--muted)">—</span>
   </div>
 
-  <!-- KPIs -->
   <div class="kpis">
     <div class="kpi"><div class="kl">Conso Période</div><div class="kv" id="k1">—<span class="ku">kWh</span></div><div class="ks" id="k1s"></div></div>
     <div class="kpi o"><div class="kl">Moy / Jour</div><div class="kv" id="k2">—<span class="ku">kWh</span></div><div class="ks" id="k2s"></div></div>
     <div class="kpi g"><div class="kl">Pic Max</div><div class="kv" id="k3">—<span class="ku">kWh</span></div><div class="ks" id="k3s"></div></div>
-    <div class="kpi p"><div class="kl">Coût Estimé</div><div class="kv" id="k4">—<span class="ku">€</span></div><div class="ks">0,2516 €/kWh</div></div>
+    <div class="kpi p"><div class="kl">Coût Estimé</div><div class="kv" id="k4">—<span class="ku">€</span></div><div class="ks">tarif configuré</div></div>
   </div>
 
-  <!-- TABS -->
-  <div class="tabs">
+  <div class="tabs" id="mainTabs">
     <button class="tab active" onclick="tab('Daily')">📈 Journalier</button>
     <button class="tab" onclick="tab('Insights')">🔍 Insights</button>
-    <button class="tab" onclick="tab('Load')">⚡ Charge 30min</button>
+    <button class="tab" onclick="tab('Load')">⚡ Charge</button>
     <button class="tab" onclick="tab('Compare')">📅 Mensuel</button>
+    <button class="tab" onclick="tab('Annual')">📊 Annuel</button>
+    <button class="tab" onclick="tab('Budget')">💰 Budget</button>
   </div>
 
   <!-- DAILY -->
   <div class="panel active" id="pDaily">
-    <div class="ph">
-      <div><div class="pt">Consommation Journalière</div><div class="ps">kWh par jour — orange = pic &gt;30% au-dessus moy.</div></div>
-      <div class="pbtns" id="dBtns"></div>
-    </div>
+    <div class="ph"><div><div class="pt">Consommation Journalière</div><div class="ps">kWh par jour — orange = pic &gt;30% au-dessus moy.</div></div><div class="pbtns" id="dBtns"></div></div>
     <div class="cw"><canvas id="cD"></canvas></div>
   </div>
 
   <!-- INSIGHTS -->
   <div class="panel" id="pInsights">
     <div class="pt" style="margin-bottom:14px">🔍 Insights & Patterns</div>
-
     <div class="stat-grid">
-      <!-- Heure de pointe -->
-      <div class="stat-card full-width">
-        <div class="stat-title">🕐 Profil horaire moyen (consommation par heure)</div>
-        <div class="heatmap" id="hourlyBars"></div>
-      </div>
-
-      <!-- WE vs Semaine -->
-      <div class="stat-card">
-        <div class="stat-title">📆 Semaine vs Week-end</div>
-        <div style="margin-top:4px" id="weekCompare"></div>
-      </div>
-
-      <!-- Saison -->
-      <div class="stat-card">
-        <div class="stat-title">🌡️ Mois les + chargés</div>
-        <div style="margin-top:4px" id="monthRank"></div>
-      </div>
-
-      <!-- Score -->
-      <div class="stat-card">
-        <div class="stat-title">🏆 Score Efficacité</div>
-        <div class="score-ring">
-          <div class="score-num" id="scoreNum">—</div>
-          <div class="score-label" id="scoreLabel">—</div>
-        </div>
-        <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
-        <div class="ks" id="scoreDesc" style="margin-top:6px;line-height:1.5"></div>
-      </div>
-
-      <!-- Projection -->
-      <div class="stat-card">
-        <div class="stat-title">📊 Projection annuelle</div>
-        <div class="score-ring" style="padding:4px 0">
-          <div class="score-num" id="projNum" style="font-size:28px">—<span style="font-size:14px;color:var(--muted);font-weight:400"> €</span></div>
-          <div class="score-label" id="projLabel">—</div>
-        </div>
-        <div class="ks" id="projDesc" style="margin-top:4px;line-height:1.5"></div>
-      </div>
-
-      <!-- Heure top 3 -->
-      <div class="stat-card full-width">
-        <div class="stat-title">⚡ Top 5 jours les plus énergivores</div>
-        <table><thead><tr><th>Date</th><th>kWh</th><th>vs moyenne</th></tr></thead><tbody id="topDays"></tbody></table>
-      </div>
+      <div class="stat-card full-width"><div class="stat-title">🕐 Profil horaire moyen</div><div id="hourlyBars"></div></div>
+      <div class="stat-card"><div class="stat-title">📆 Semaine vs Week-end</div><div style="margin-top:4px" id="weekCompare"></div></div>
+      <div class="stat-card"><div class="stat-title">🌡️ Mois les + chargés</div><div style="margin-top:4px" id="monthRank"></div></div>
+      <div class="stat-card"><div class="stat-title">🏆 Score Efficacité</div><div class="score-ring"><div class="score-num" id="scoreNum">—</div><div class="score-label" id="scoreLabel">—</div></div><div class="score-bar"><div class="score-fill" id="scoreFill"></div></div><div class="ks" id="scoreDesc" style="margin-top:6px;line-height:1.5"></div></div>
+      <div class="stat-card"><div class="stat-title">📊 Projection annuelle</div><div class="score-ring" style="padding:4px 0"><div class="score-num" id="projNum" style="font-size:28px">—</div><div class="score-label" id="projLabel">—</div></div><div class="ks" id="projDesc" style="margin-top:4px;line-height:1.5"></div></div>
+      <div class="stat-card full-width"><div class="stat-title">🌡️ Analyse par Saison</div><div class="season-grid" id="seasonGrid"></div></div>
+      <div class="stat-card full-width"><div class="stat-title">⚠️ Détection d'anomalies</div><div id="anomalyList"></div></div>
+      <div class="stat-card full-width"><div class="stat-title">⚡ Top 5 jours les plus énergivores</div><table><thead><tr><th>Date</th><th>kWh</th><th>vs moy</th><th>Status</th></tr></thead><tbody id="topDays"></tbody></table></div>
     </div>
   </div>
 
   <!-- LOAD -->
   <div class="panel" id="pLoad">
-    <div class="ph">
-      <div><div class="pt">Courbe de Charge</div><div class="ps">Puissance en Watt · pas 30 min</div></div>
-      <div class="pbtns" id="lBtns"></div>
-    </div>
+    <div class="ph"><div><div class="pt">Courbe de Charge</div><div class="ps">Puissance en Watt · pas 30 min</div></div><div class="pbtns" id="lBtns"></div></div>
     <div class="cw"><canvas id="cL"></canvas></div>
     <div class="stat-grid" style="margin-top:12px">
       <div class="stat-card"><div class="stat-title">🌙 HC vs HP</div><canvas id="cHP" height="150"></canvas></div>
@@ -321,16 +310,45 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 
-  <!-- COMPARE -->
+  <!-- MENSUEL -->
   <div class="panel" id="pCompare">
     <div class="ph"><div><div class="pt">Comparaison Mensuelle</div><div class="ps">kWh par mois</div></div></div>
     <div class="cw"><canvas id="cC"></canvas></div>
-    <div class="stat-card" style="margin-top:12px">
-      <div class="stat-title">📅 Récap mensuel</div>
-      <table><thead><tr><th>Mois</th><th>kWh</th><th>Δ</th><th>Coût</th></tr></thead><tbody id="mTb"></tbody></table>
+    <div class="stat-card" style="margin-top:12px"><div class="stat-title">📅 Récap mensuel</div><table><thead><tr><th>Mois</th><th>kWh</th><th>Δ</th><th>Coût</th></tr></thead><tbody id="mTb"></tbody></table></div>
+  </div>
+
+  <!-- ANNUAL -->
+  <div class="panel" id="pAnnual">
+    <div class="pt" style="margin-bottom:14px">📊 Analyse Annuelle</div>
+    <div class="stat-card full-width" style="margin-bottom:12px"><div class="stat-title">🗓️ Heatmap Calendrier</div><div class="cal-heatmap" id="calHeatmap"></div></div>
+    <div class="stat-card full-width" style="margin-bottom:12px"><div class="stat-title">📈 Consommation cumulée</div><div class="pbtns" id="cumulBtns" style="margin-bottom:8px"></div><div class="cw"><canvas id="cCumul"></canvas></div></div>
+    <div class="stat-card full-width" style="margin-bottom:12px"><div class="stat-title">🔄 Comparaison N vs N-1</div><div class="cw"><canvas id="cNvsN1"></canvas></div><div id="nvsn1Summary" style="margin-top:10px"></div></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-title">📊 Répartition trimestrielle</div><canvas id="cQuarter" height="200"></canvas></div>
+      <div class="stat-card"><div class="stat-title">📈 Tendance & Prévision</div><canvas id="cTrend" height="200"></canvas></div>
     </div>
   </div>
-</div><!-- end dash -->
+
+  <!-- BUDGET -->
+  <div class="panel" id="pBudget">
+    <div class="pt" style="margin-bottom:14px">💰 Budget & Tarifs</div>
+    <div class="stat-card full-width" style="margin-bottom:12px">
+      <div class="stat-title">⚙️ Configuration tarifaire</div>
+      <div class="config-grid">
+        <div class="field"><label>Abo annuel (€)</label><input type="number" id="cfgAbo" value="151.20" step="0.01" onchange="recalcBudget()"></div>
+        <div class="field"><label>CTA (€/an)</label><input type="number" id="cfgCTA" value="21.18" step="0.01" onchange="recalcBudget()"></div>
+        <div class="field"><label>Budget mensuel (€)</label><input type="number" id="cfgBudget" value="120" step="1" onchange="recalcBudget()"></div>
+        <div class="field"><label>kWh Base (€)</label><input type="number" id="cfgBase" value="0.2516" step="0.0001" onchange="recalcBudget()"></div>
+        <div class="field"><label>kWh HP (€)</label><input type="number" id="cfgHP" value="0.2700" step="0.0001" onchange="recalcBudget()"></div>
+        <div class="field"><label>kWh HC (€)</label><input type="number" id="cfgHC" value="0.2068" step="0.0001" onchange="recalcBudget()"></div>
+      </div>
+    </div>
+    <div class="stat-card full-width" style="margin-bottom:12px"><div class="stat-title">⚖️ Comparaison tarifs annualisée</div><div class="tariff-compare" id="tariffCompare"></div></div>
+    <div class="stat-card full-width" style="margin-bottom:12px"><div class="stat-title">📊 Suivi budget mensuel</div><div id="budgetMonthly"></div></div>
+    <div class="stat-card full-width" style="margin-bottom:12px"><div class="stat-title">🧾 Estimation facture annuelle</div><table><thead><tr><th>Mois</th><th>kWh</th><th>Conso</th><th>Abo</th><th>Total</th><th></th></tr></thead><tbody id="invoiceTable"></tbody><tfoot id="invoiceFoot"></tfoot></table></div>
+    <div class="stat-card full-width"><div class="stat-title">📤 Export</div><div class="export-btns"><button class="export-btn" onclick="exportCSV()">📄 CSV</button><button class="export-btn" onclick="exportJSON()">📋 JSON</button></div></div>
+  </div>
+</div>
 </div>
 
 <script>
@@ -340,240 +358,273 @@ const fmt=d=>d.toISOString().split('T')[0];
 const fr=d=>`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`;
 const p=n=>String(n).padStart(2,'0');
 const MN=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+const MNF=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const fmtM=d=>MN[d.getMonth()]+' '+d.getFullYear();
 const pD=s=>new Date(s+'T00:00:00');
 const kill=id=>{if(CH[id]){CH[id].destroy();delete CH[id];}};
 const B={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#10141c',borderColor:'#222840',borderWidth:1,titleColor:'#5a6480',bodyColor:'#e8edf5',titleFont:{family:'Space Mono',size:9},bodyFont:{family:'Space Mono',size:11},padding:8}},scales:{x:{grid:{color:'rgba(34,40,64,.9)'},ticks:{color:'#5a6480',font:{family:'Space Mono',size:9},maxTicksLimit:8},border:{color:'#222840'}},y:{grid:{color:'rgba(34,40,64,.9)'},ticks:{color:'#5a6480',font:{family:'Space Mono',size:9}},border:{color:'#222840'}}}};
+function getCfg(){return{abo:+$('cfgAbo').value||151.20,cta:+$('cfgCTA').value||21.18,base:+$('cfgBase').value||0.2516,hp:+$('cfgHP').value||0.27,hc:+$('cfgHC').value||0.2068,budget:+$('cfgBudget').value||120};}
 
-// ---- PERIOD CHIPS ----
-function selectChip(days, btn){
-  customMode=false;
-  activePeriod=days;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active'));
-  btn.classList.add('active');
-  $('customDates').classList.remove('open');
-  const e=new Date();e.setDate(e.getDate()-1);
-  const s=new Date(e);s.setDate(s.getDate()-days+1);
-  $('ds').value=fmt(s);$('de').value=fmt(e);chk();
-}
-function toggleCustom(btn){
-  customMode=!customMode;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active'));
-  if(customMode){btn.classList.add('custom-active');$('customDates').classList.add('open');}
-  else{$('customDates').classList.remove('open');}
-}
-
-// ---- VALIDATION ----
-function chk(){
-  const t=$('tok').value.trim(),pdlV=$('pdl').value.trim(),el=$('ts');
-  if(t.length>=20)el.innerHTML=`<span class="ok">✓ Token OK (${t.length} car.)</span>`;
-  else if(t.length>0)el.innerHTML=`<span class="bad">⚠ Token trop court</span>`;
-  else el.innerHTML='<span class="dim">○ Token non renseigné</span>';
-  $('goBtn').disabled=!(pdlV.length>=12&&t.length>=20);
-}
+// === PERIOD ===
+function selectChip(days,btn){customMode=false;activePeriod=days;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active'));btn.classList.add('active');$('customDates').classList.remove('open');const e=new Date();e.setDate(e.getDate()-1);const s=new Date(e);s.setDate(s.getDate()-days+1);$('ds').value=fmt(s);$('de').value=fmt(e);chk();}
+function selectYear(y,btn){customMode=false;activePeriod=365;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active'));btn.classList.add('year-active');$('customDates').classList.remove('open');const now=new Date();const end=(y===now.getFullYear())?new Date(now.getTime()-864e5):new Date(y,11,31);$('ds').value=`${y}-01-01`;$('de').value=fmt(end);chk();}
+function toggleCustom(btn){customMode=!customMode;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active','custom-active','year-active'));if(customMode){btn.classList.add('custom-active');$('customDates').classList.add('open');}else{$('customDates').classList.remove('open');}}
+function chk(){const t=$('tok').value.trim(),pdlV=$('pdl').value.trim(),el=$('ts');if(t.length>=20)el.innerHTML=`<span class="ok">✓ Token OK (${t.length} car.)</span>`;else if(t.length>0)el.innerHTML=`<span class="bad">⚠ Token trop court</span>`;else el.innerHTML='<span class="dim">○ Token non renseigné</span>';$('goBtn').disabled=!(pdlV.length>=12&&t.length>=20);}
 function setL(on,txt){if(txt)$('ldrT').textContent=txt;$('ldr').classList.toggle('on',on);}
 function setE(msg){$('errBox').textContent=msg?'❌ '+msg:'';$('errBox').classList.toggle('on',!!msg);}
 
-// ---- API ----
+// === API ===
 const PROXY='https://corsproxy.io/?url=';
 async function apiGet(url,tok){return fetch(PROXY+encodeURIComponent(url),{headers:{'Authorization':tok}});}
-
 async function doReal(){
-  const pdl=$('pdl').value.trim(),tok=$('tok').value.trim();
-  let s=$('ds').value,e=$('de').value;
+  const pdl=$('pdl').value.trim(),tok=$('tok').value.trim();let s=$('ds').value,e=$('de').value;
   if(!s||!e){selectChip(30,document.querySelector('.chip.active')||document.querySelectorAll('.chip')[1]);s=$('ds').value;e=$('de').value;}
   setE('');setL(true,'Validation du token...');
   try{
-    const vr=await apiGet(`https://www.myelectricaldata.fr/valid_access/${pdl}/`,tok);
-    if(!vr.ok){const j=await vr.json().catch(()=>({}));throw new Error(j.detail||`Accès refusé (${vr.status})`);}
-    setL(true,'Chargement consommation journalière...');
-    const dr=await apiGet(`https://www.myelectricaldata.fr/daily_consumption/${pdl}/start/${s}/end/${e}/cache/`,tok);
-    if(!dr.ok)throw new Error(`Erreur données (${dr.status})`);
-    const dj=await dr.json();
-    setL(true,'Chargement courbe de charge (7j)...');
-    let lj=null;
+    const vr=await apiGet(`https://www.myelectricaldata.fr/valid_access/${pdl}/`,tok);if(!vr.ok){const j=await vr.json().catch(()=>({}));throw new Error(j.detail||`Accès refusé (${vr.status})`);}
+    setL(true,'Chargement conso journalière...');
+    const dr=await apiGet(`https://www.myelectricaldata.fr/daily_consumption/${pdl}/start/${s}/end/${e}/cache/`,tok);if(!dr.ok)throw new Error(`Erreur données (${dr.status})`);const dj=await dr.json();
+    setL(true,'Chargement courbe de charge...');let lj=null;
     try{const lsd=new Date(e);lsd.setDate(lsd.getDate()-6);const lr=await apiGet(`https://www.myelectricaldata.fr/consumption_load_curve/${pdl}/start/${fmt(lsd)}/end/${e}/cache/`,tok);if(lr.ok)lj=await lr.json();}catch{}
-    setL(false);
-    render(pDaily(dj),pLoad(lj),pdl,s,e,'🟢 DONNÉES RÉELLES');
+    setL(false);render(parseDaily(dj),parseLoad(lj),pdl,s,e,'🟢 DONNÉES RÉELLES');
   }catch(err){setL(false);setE(err.message||'Erreur');}
 }
+function parseDaily(json){try{const r=json?.meter_reading?.interval_reading||json?.interval_reading||[];return r.map(x=>({date:pD(x.date),kwh:+Math.max(0,parseFloat(x.value)/1000).toFixed(3)})).filter(d=>!isNaN(d.kwh)).sort((a,b)=>a.date-b.date);}catch{return[];}}
+function parseLoad(json){if(!json)return{};try{const r=json?.meter_reading?.interval_reading||json?.interval_reading||[];const m={};for(const x of r){const dt=new Date(x.date.replace(' ','T'));const d=fmt(dt);if(!m[d])m[d]=[];m[d].push({dt,w:parseFloat(x.value)});}for(const d of Object.keys(m))m[d].sort((a,b)=>a.dt-b.dt);return m;}catch{return{};}}
 
-// ---- PARSE ----
-function pDaily(json){
-  try{const r=json?.meter_reading?.interval_reading||json?.interval_reading||[];return r.map(x=>({date:pD(x.date),kwh:+Math.max(0,parseFloat(x.value)/1000).toFixed(3)})).filter(d=>!isNaN(d.kwh)).sort((a,b)=>a.date-b.date);}catch{return[];}
-}
-function pLoad(json){
-  if(!json)return{};
-  try{const r=json?.meter_reading?.interval_reading||json?.interval_reading||[];const m={};for(const x of r){const dt=new Date(x.date.replace(' ','T'));const d=fmt(dt);if(!m[d])m[d]=[];m[d].push({dt,w:parseFloat(x.value)});}for(const d of Object.keys(m))m[d].sort((a,b)=>a.dt-b.dt);return m;}catch{return{};}
-}
-
-// ---- DEMO ----
-function doDemo(){
-  setL(true,'Génération démo...');
-  $('pdl').value='22516914714270';
-  setTimeout(()=>{const d=genDemo();setL(false);render(d.daily,d.load,'22516914714270',d.s,d.e,'▶ DÉMO');},400);
-}
+// === DEMO ===
+function doDemo(){setL(true,'Génération démo 2 ans...');$('pdl').value='22516914714270';setTimeout(()=>{const d=genDemo();setL(false);render(d.daily,d.load,'22516914714270',d.s,d.e,'▶ DÉMO');},400);}
 function genDemo(){
   const seed=4270,rnd=(a,b,k)=>a+((seed*9301+k*49297+233)%10000)/10000*(b-a);
-  const daily=[],eD=new Date();eD.setDate(eD.getDate()-1);const sD=new Date(eD);sD.setDate(sD.getDate()-364);
+  const daily=[],eD=new Date();eD.setDate(eD.getDate()-1);const sD=new Date(eD);sD.setFullYear(sD.getFullYear()-2);
   for(let i=0,d=new Date(sD);d<=eD;d.setDate(d.getDate()+1),i++){
     const sf=[1.4,1.3,1.1,0.9,0.8,0.7,0.65,0.7,0.8,0.95,1.2,1.45][d.getMonth()];
     const we=d.getDay()===0||d.getDay()===6;
-    daily.push({date:new Date(d),kwh:+Math.max(1,(rnd(8,14,i)+(we?3:0)+rnd(-1.5,1.5,i*7))*sf).toFixed(2)});
+    const yf=d.getFullYear()===eD.getFullYear()?0.95:1;
+    let val=+(Math.max(1,(rnd(8,14,i)+(we?3:0)+rnd(-1.5,1.5,i*7))*sf*yf)).toFixed(2);
+    if(i%73===0)val=+(val*2.2).toFixed(2);if(i%127===0)val=+(val*1.9).toFixed(2);
+    daily.push({date:new Date(d),kwh:val});
   }
   const prof=[0.3,0.25,0.22,0.2,0.2,0.22,0.3,0.6,1.2,1.8,1.5,1.2,1.0,0.9,0.85,0.9,1.0,1.1,1.3,1.6,2.2,2.4,1.8,1.4,1.0,0.7,0.5,0.4,0.35,0.32,0.3,0.25,0.22,0.2,0.2,0.22,0.3,0.6,1.2,1.8,1.5,1.2,1.0,0.9,0.85,0.9,1.0,1.1];
-  const load={};
-  for(const d of daily.slice(-7)){const key=fmt(d.date);load[key]=prof.map((pp,i)=>{const dt=new Date(d.date);dt.setHours(Math.floor(i/2));dt.setMinutes(i%2===0?0:30);return{dt,w:Math.max(50,(pp+((seed*9301+i*4929+233)%100)/100*0.3-0.15)*1000)};});}
+  const load={};for(const d of daily.slice(-7)){const key=fmt(d.date);load[key]=prof.map((pp,i)=>{const dt=new Date(d.date);dt.setHours(Math.floor(i/2));dt.setMinutes(i%2===0?0:30);return{dt,w:Math.max(50,(pp+((seed*9301+i*4929+233)%100)/100*0.3-0.15)*1000)};});}
   return{daily,load,s:fmt(sD),e:fmt(eD)};
 }
 
-// ---- RENDER ----
+// === RENDER ===
 function render(daily,loadByDay,pdl,s,e,src){
-  if(!daily||!daily.length){setE('Aucune donnée. Essayez une autre période.');return;}
+  if(!daily||!daily.length){setE('Aucune donnée.');return;}
   AD={daily,loadByDay};lDays=Object.keys(loadByDay).sort();
-  const tot=daily.reduce((a,d)=>a+d.kwh,0),avg=tot/daily.length,peak=daily.reduce((pp,d)=>d.kwh>pp.kwh?d:pp,daily[0]),cost=tot*.2516;
-  $('pdlC').textContent=pdl;$('srcT').textContent=src;
-  $('perL').textContent=`${fr(pD(s))} → ${fr(pD(e))} · ${daily.length}j`;
+  const cfg=getCfg();const tot=daily.reduce((a,d)=>a+d.kwh,0),avg=tot/daily.length,peak=daily.reduce((pp,d)=>d.kwh>pp.kwh?d:pp,daily[0]),cost=tot*cfg.base;
+  $('pdlC').textContent=pdl;$('srcT').textContent=src;$('perL').textContent=`${fr(pD(s))} → ${fr(pD(e))} · ${daily.length}j`;
   $('k1').innerHTML=`${tot.toFixed(0)}<span class="ku">kWh</span>`;$('k1s').textContent=`${daily.length} jours`;
   $('k2').innerHTML=`${avg.toFixed(1)}<span class="ku">kWh</span>`;$('k2s').textContent='par jour';
-  $('k3').innerHTML=`${peak.kwh}<span class="ku">kWh</span>`;$('k3s').textContent=`${fr(peak.date)}`;
+  $('k3').innerHTML=`${peak.kwh}<span class="ku">kWh</span>`;$('k3s').textContent=fr(peak.date);
   $('k4').innerHTML=`${cost.toFixed(0)}<span class="ku">€</span>`;
   buildDB(daily.length);drawD(Math.min(activePeriod,daily.length));
   buildLB();if(lDays.length)drawL(lDays[lDays.length-1]);
-  drawC();buildInsights(daily,avg);
-  $('dash').style.display='block';
-  setTimeout(()=>$('dash').scrollIntoView({behavior:'smooth'}),100);
+  drawC();buildInsights(daily,avg);buildAnnual(daily);buildBudget(daily);
+  $('dash').style.display='block';setTimeout(()=>$('dash').scrollIntoView({behavior:'smooth'}),100);
 }
 
-// ---- INSIGHTS ----
+// === INSIGHTS ===
 function buildInsights(daily,avg){
-  // Profil horaire (moyenne kWh par heure via données journalières — approximation)
   const byHour=Array(24).fill(0).map(()=>({sum:0,cnt:0}));
-  // Use load curve if available
-  for(const day of lDays){
-    const slots=AD.loadByDay[day]||[];
-    for(const s of slots){
-      const h=s.dt.getHours();
-      byHour[h].sum+=s.w/1000;byHour[h].cnt++;
-    }
-  }
+  for(const day of lDays){const slots=AD.loadByDay[day]||[];for(const s of slots){const h=s.dt.getHours();byHour[h].sum+=s.w/1000;byHour[h].cnt++;}}
   const hasLoad=lDays.length>0&&byHour[0].cnt>0;
-  const hourlyAvg=byHour.map((h,i)=>({h:i,val:h.cnt>0?h.sum/h.cnt:0}));
-  const maxH=Math.max(...hourlyAvg.map(h=>h.val))||1;
-
-  // Hourly bars
-  const hb=$('hourlyBars');
-  hb.innerHTML='';
-  if(hasLoad){
-    const colors=['#00d4ff','#0080ff','#a855f7','#ff6b35','#00e676'];
-    hourlyAvg.forEach(({h,val})=>{
-      const pct=val/maxH*100;
-      const color=val>maxH*.8?'var(--a3)':val>maxH*.5?'#a855f7':'var(--accent)';
-      hb.innerHTML+=`<div class="bar-row"><div class="bar-label">${p(h)}h</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="bar-val">${val>0?val.toFixed(3)+' kW':'—'}</div></div>`;
-    });
-    const peakHour=hourlyAvg.reduce((a,b)=>b.val>a.val?b:a);
-    hb.innerHTML+=`<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px">⚡ Pic moyen : <span style="color:var(--a3)">${p(peakHour.h)}h–${p(peakHour.h+1)}h</span> · ${peakHour.val.toFixed(3)} kW</div>`;
-  } else {
-    // Fallback: distribution journalière par segments
-    hb.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">Activez la collecte horaire sur Enedis pour voir le profil par heure.</div>';
-  }
-
-  // Semaine vs Week-end
-  const wdays=daily.filter(d=>d.date.getDay()!==0&&d.date.getDay()!==6);
-  const wends=daily.filter(d=>d.date.getDay()===0||d.date.getDay()===6);
-  const avgW=wdays.length?wdays.reduce((a,d)=>a+d.kwh,0)/wdays.length:0;
-  const avgWE=wends.length?wends.reduce((a,d)=>a+d.kwh,0)/wends.length:0;
-  const maxWW=Math.max(avgW,avgWE)||1;
-  $('weekCompare').innerHTML=`
-    <div class="bar-row"><div class="bar-label" style="width:48px;font-size:10px">Sem.</div><div class="bar-track"><div class="bar-fill" style="width:${avgW/maxWW*100}%;background:var(--accent)"></div></div><div class="bar-val">${avgW.toFixed(1)} kWh</div></div>
-    <div class="bar-row"><div class="bar-label" style="width:48px;font-size:10px">W-E</div><div class="bar-track"><div class="bar-fill" style="width:${avgWE/maxWW*100}%;background:var(--a3)"></div></div><div class="bar-val">${avgWE.toFixed(1)} kWh</div></div>
-    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px">${avgWE>avgW?`+${((avgWE/avgW-1)*100).toFixed(0)}% le W-E 📈`:`-${((1-avgWE/avgW)*100).toFixed(0)}% le W-E 📉`}</div>`;
-
-  // Mois ranking
-  const byMonth={};
-  for(const d of daily){const k=d.date.getMonth();if(!byMonth[k])byMonth[k]={sum:0,cnt:0,name:MN[k]};byMonth[k].sum+=d.kwh;byMonth[k].cnt++;}
-  const monthAvgs=Object.values(byMonth).map(m=>({name:m.name,avg:m.sum/m.cnt})).sort((a,b)=>b.avg-a.avg).slice(0,4);
-  const maxMA=monthAvgs[0]?.avg||1;
+  const hourlyAvg=byHour.map((h,i)=>({h:i,val:h.cnt>0?h.sum/h.cnt:0}));const maxH=Math.max(...hourlyAvg.map(h=>h.val))||1;
+  const hb=$('hourlyBars');hb.innerHTML='';
+  if(hasLoad){hourlyAvg.forEach(({h,val})=>{const pct=val/maxH*100;const color=val>maxH*.8?'var(--a3)':val>maxH*.5?'#a855f7':'var(--accent)';hb.innerHTML+=`<div class="bar-row"><div class="bar-label">${p(h)}h</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="bar-val">${val>0?val.toFixed(3)+' kW':'—'}</div></div>`;});const ph=hourlyAvg.reduce((a,b)=>b.val>a.val?b:a);hb.innerHTML+=`<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px">⚡ Pic moyen : <span style="color:var(--a3)">${p(ph.h)}h–${p(ph.h+1)}h</span> · ${ph.val.toFixed(3)} kW</div>`;}
+  else{hb.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">Activez la collecte horaire sur Enedis pour le profil par heure.</div>';}
+  const wdays=daily.filter(d=>d.date.getDay()!==0&&d.date.getDay()!==6),wends=daily.filter(d=>d.date.getDay()===0||d.date.getDay()===6);
+  const avgW=wdays.length?wdays.reduce((a,d)=>a+d.kwh,0)/wdays.length:0,avgWE=wends.length?wends.reduce((a,d)=>a+d.kwh,0)/wends.length:0,maxWW=Math.max(avgW,avgWE)||1;
+  $('weekCompare').innerHTML=`<div class="bar-row"><div class="bar-label" style="width:40px;font-size:10px">Sem.</div><div class="bar-track"><div class="bar-fill" style="width:${avgW/maxWW*100}%;background:var(--accent)"></div></div><div class="bar-val">${avgW.toFixed(1)} kWh</div></div><div class="bar-row"><div class="bar-label" style="width:40px;font-size:10px">W-E</div><div class="bar-track"><div class="bar-fill" style="width:${avgWE/maxWW*100}%;background:var(--a3)"></div></div><div class="bar-val">${avgWE.toFixed(1)} kWh</div></div><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px">${avgWE>avgW?`+${((avgWE/avgW-1)*100).toFixed(0)}% le W-E 📈`:`-${((1-avgWE/avgW)*100).toFixed(0)}% le W-E 📉`}</div>`;
+  const byMonth={};for(const d of daily){const k=d.date.getMonth();if(!byMonth[k])byMonth[k]={sum:0,cnt:0,name:MN[k]};byMonth[k].sum+=d.kwh;byMonth[k].cnt++;}
+  const monthAvgs=Object.values(byMonth).map(m=>({name:m.name,avg:m.sum/m.cnt})).sort((a,b)=>b.avg-a.avg).slice(0,4);const maxMA=monthAvgs[0]?.avg||1;
   $('monthRank').innerHTML=monthAvgs.map(m=>`<div class="bar-row"><div class="bar-label" style="width:28px">${m.name}</div><div class="bar-track"><div class="bar-fill" style="width:${m.avg/maxMA*100}%;background:var(--a3)"></div></div><div class="bar-val">${m.avg.toFixed(1)}</div></div>`).join('');
-
-  // Score d'efficacité (basé sur la moyenne par rapport à une référence FR ~10-12 kWh/j pour logement moyen)
-  const ref=12;const score=Math.max(0,Math.min(100,Math.round((1-Math.max(0,avg-ref/2)/ref)*100)));
-  const scoreColor=score>70?'var(--green)':score>40?'#a855f7':'var(--a3)';
-  const scoreDesc=score>70?'Consommation maîtrisée 👍':score>40?'Dans la moyenne nationale':'Consommation élevée — des économies sont possibles';
-  $('scoreNum').textContent=score;$('scoreNum').style.color=scoreColor;
-  $('scoreLabel').textContent=`/100 · ${avg.toFixed(1)} kWh/j moy.`;
-  $('scoreFill').style.width=score+'%';$('scoreFill').style.background=scoreColor;
-  $('scoreDesc').textContent=scoreDesc;
-
-  // Projection annuelle
-  const projKwh=avg*365,projCost=projKwh*.2516;
-  $('projNum').innerHTML=`${Math.round(projCost)}<span style="font-size:14px;color:var(--muted);font-weight:400"> €</span>`;
-  $('projLabel').textContent=`${Math.round(projKwh)} kWh/an estimés`;
-  $('projDesc').textContent=`Basé sur ${avg.toFixed(1)} kWh/j · Tarif réglementé`;
-
-  // Top 5 jours
+  const ref=12,score=Math.max(0,Math.min(100,Math.round((1-Math.max(0,avg-ref/2)/ref)*100)));const sColor=score>70?'var(--green)':score>40?'#a855f7':'var(--a3)';
+  $('scoreNum').textContent=score;$('scoreNum').style.color=sColor;$('scoreLabel').textContent=`/100 · ${avg.toFixed(1)} kWh/j moy.`;$('scoreFill').style.width=score+'%';$('scoreFill').style.background=sColor;$('scoreDesc').textContent=score>70?'Consommation maîtrisée 👍':score>40?'Moyenne nationale':'Consommation élevée';
+  const cfg=getCfg(),projKwh=avg*365,projCost=projKwh*cfg.base+cfg.abo+cfg.cta;
+  $('projNum').innerHTML=`${Math.round(projCost)}<span style="font-size:14px;color:var(--muted);font-weight:400"> €</span>`;$('projLabel').textContent=`${Math.round(projKwh)} kWh/an`;$('projDesc').textContent=`${avg.toFixed(1)} kWh/j · Abo+CTA inclus`;
+  buildSeasons(daily);buildAnomalies(daily,avg);
+  const stddev=Math.sqrt(daily.reduce((a,d)=>a+Math.pow(d.kwh-avg,2),0)/daily.length);
   const top5=[...daily].sort((a,b)=>b.kwh-a.kwh).slice(0,5);
-  $('topDays').innerHTML=top5.map(d=>{const delta=((d.kwh/avg-1)*100).toFixed(0);return`<tr><td>${fr(d.date)}</td><td class="v">${d.kwh}</td><td style="color:var(--a3)">+${delta}%</td></tr>`;}).join('');
+  $('topDays').innerHTML=top5.map(d=>{const delta=((d.kwh/avg-1)*100).toFixed(0);const sigma=(d.kwh-avg)/stddev;let tag='';if(sigma>3)tag='<span class="anomaly-tag anomaly-vhigh">critique</span>';else if(sigma>2)tag='<span class="anomaly-tag anomaly-high">élevé</span>';return`<tr><td>${fr(d.date)}</td><td class="v">${d.kwh}</td><td style="color:var(--a3)">+${delta}%</td><td>${tag}</td></tr>`;}).join('');
 }
 
-// ---- DAILY CHART ----
-function buildDB(total){
-  const c=$('dBtns'),opts=[7,14,30,90,365].filter(x=>x<=total);
-  if(!opts.includes(total)&&total<365)opts.push(total);
-  const def=Math.min(activePeriod,total);
-  c.innerHTML=opts.map(n=>`<button class="pbtn ${n===def?'active':''}" onclick="drawD(${n},this)">${n>=365?'1AN':n+'J'}</button>`).join('');
-}
-function drawD(n,btn){
-  if(btn){document.querySelectorAll('#dBtns .pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
-  kill('d');const sl=AD.daily.slice(-n),labels=sl.map(d=>fr(d.date)),vals=sl.map(d=>d.kwh),avg=vals.reduce((a,v)=>a+v,0)/vals.length;
-  CH['d']=new Chart($('cD').getContext('2d'),{type:'bar',data:{labels,datasets:[
-    {data:vals,backgroundColor:vals.map(v=>v>avg*1.3?'rgba(255,107,53,.75)':'rgba(0,212,255,.6)'),borderColor:vals.map(v=>v>avg*1.3?'#ff6b35':'#00d4ff'),borderWidth:1,borderRadius:3},
-    {type:'line',data:vals.map(()=>+avg.toFixed(2)),borderColor:'rgba(255,107,53,.5)',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false,tension:0}
-  ]},options:{...B,plugins:{...B.plugins,tooltip:{...B.plugins.tooltip,callbacks:{label:c=>c.datasetIndex===0?` ${c.parsed.y} kWh`:` Moy: ${avg.toFixed(2)} kWh`}}}}});
+function buildSeasons(daily){
+  const S=[{name:'Hiver',icon:'❄️',cls:'winter',m:[11,0,1]},{name:'Printemps',icon:'🌸',cls:'spring',m:[2,3,4]},{name:'Été',icon:'☀️',cls:'summer',m:[5,6,7]},{name:'Automne',icon:'🍂',cls:'autumn',m:[8,9,10]}];
+  S.forEach(s=>{s.sum=0;s.cnt=0;});
+  daily.forEach(d=>{const m=d.date.getMonth();for(const s of S)if(s.m.includes(m)){s.sum+=d.kwh;s.cnt++;break;}});
+  const maxS=Math.max(...S.filter(s=>s.cnt).map(s=>s.sum/s.cnt))||1;
+  $('seasonGrid').innerHTML=S.filter(s=>s.cnt).map(s=>{const av=s.sum/s.cnt;return`<div class="season-card ${s.cls}"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:18px">${s.icon}</span><div class="season-name">${s.name}</div></div><div class="season-val">${av.toFixed(1)}<span class="ku">kWh/j</span></div><div class="ks">${s.sum.toFixed(0)} kWh · ${s.cnt}j</div><div style="margin-top:6px"><div class="bar-track"><div class="bar-fill" style="width:${(av/maxS*100).toFixed(0)}%;background:var(--accent)"></div></div></div></div>`;}).join('');
 }
 
-// ---- LOAD CHART ----
-function buildLB(){
-  const c=$('lBtns');
-  if(!lDays.length){c.innerHTML='<span style="color:var(--muted);font-family:var(--mono);font-size:10px">Activez la collecte horaire sur Enedis</span>';return;}
-  c.innerHTML=lDays.slice(-5).map((d,i,a)=>{const dt=pD(d);return`<button class="pbtn ${i===a.length-1?'active':''}" onclick="drawL('${d}',this)">${dt.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'})}</button>`;}).join('');
-}
-function drawL(day,btn){
-  if(btn){document.querySelectorAll('#lBtns .pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
-  kill('l');kill('hp');
-  const slots=AD.loadByDay[day]||[];if(!slots.length)return;
-  const labels=slots.map((s,i)=>i%2===0?`${p(s.dt.getHours())}h`:''),vals=slots.map(s=>+s.w.toFixed(0));
-  const ctx=$('cL').getContext('2d');const g=ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,'rgba(0,128,255,.4)');g.addColorStop(1,'rgba(0,128,255,.02)');
-  CH['l']=new Chart(ctx,{type:'line',data:{labels,datasets:[{data:vals,borderColor:'#0080ff',backgroundColor:g,borderWidth:2,fill:true,tension:.4,pointRadius:0,pointHoverRadius:4}]},options:{...B,plugins:{...B.plugins,tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.parsed.y} W`}}},scales:{...B.scales,y:{...B.scales.y,ticks:{...B.scales.y.ticks,callback:v=>v+'W'}}}}});
-  const hcW=slots.filter(s=>s.dt.getHours()>=22||s.dt.getHours()<6).reduce((a,s)=>a+s.w,0);
-  const hpW=slots.filter(s=>s.dt.getHours()>=6&&s.dt.getHours()<22).reduce((a,s)=>a+s.w,0);
-  CH['hp']=new Chart($('cHP').getContext('2d'),{type:'doughnut',data:{labels:['HC (22h-6h)','HP (6h-22h)'],datasets:[{data:[+(hcW/2000).toFixed(2),+(hpW/2000).toFixed(2)],backgroundColor:['rgba(0,230,118,.7)','rgba(255,107,53,.7)'],borderColor:['#00e676','#ff6b35'],borderWidth:1}]},options:{responsive:true,plugins:{legend:{display:true,position:'bottom',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:8,padding:8}},tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.label}: ${c.parsed.toFixed(2)} kWh`}}}}});
-  $('pkTb').innerHTML=[...vals.map((v,i)=>({v,i}))].sort((a,b)=>b.v-a.v).slice(0,5).map(({v,i})=>{const s=slots[i];return`<tr><td>${p(s.dt.getHours())}:${p(s.dt.getMinutes())}</td><td class="v">${v}W</td></tr>`;}).join('');
+function buildAnomalies(daily,avg){
+  const stddev=Math.sqrt(daily.reduce((a,d)=>a+Math.pow(d.kwh-avg,2),0)/daily.length);
+  const anomalies=daily.filter(d=>(d.kwh-avg)/stddev>2).sort((a,b)=>b.kwh-a.kwh);
+  const el=$('anomalyList');
+  if(!anomalies.length){el.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--green);padding:8px 0">✅ Aucune anomalie (seuil +2σ)</div>';return;}
+  let h=`<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px">${anomalies.length} jour(s) · Seuil: ${(avg+2*stddev).toFixed(1)} kWh</div><table><thead><tr><th>Date</th><th>kWh</th><th>Écart</th><th>Niveau</th></tr></thead><tbody>`;
+  anomalies.slice(0,8).forEach(d=>{const sigma=((d.kwh-avg)/stddev).toFixed(1);const c=sigma>3?'#ff4444':'var(--a3)';h+=`<tr><td>${fr(d.date)}</td><td class="v">${d.kwh}</td><td style="color:${c}">+${sigma}σ</td><td style="color:${c}">${sigma>3?'🔴 Critique':'🟠 Élevé'}</td></tr>`;});
+  h+='</tbody></table>';el.innerHTML=h;
 }
 
-// ---- COMPARE CHART ----
-function drawC(){
-  kill('c');const byM={};
-  for(const d of AD.daily){const k=`${d.date.getFullYear()}-${d.date.getMonth()}`;if(!byM[k])byM[k]={date:new Date(d.date.getFullYear(),d.date.getMonth(),1),kwh:0,days:0};byM[k].kwh+=d.kwh;byM[k].days++;}
-  const months=Object.values(byM).sort((a,b)=>a.date-b.date);const vals=months.map(m=>+m.kwh.toFixed(1));
-  CH['c']=new Chart($('cC').getContext('2d'),{type:'bar',data:{labels:months.map(m=>fmtM(m.date)),datasets:[{data:vals,backgroundColor:vals.map((v,i,a)=>i>0&&v>a[i-1]*1.1?'rgba(255,107,53,.7)':'rgba(0,212,255,.6)'),borderColor:vals.map((v,i,a)=>i>0&&v>a[i-1]*1.1?'#ff6b35':'#00d4ff'),borderWidth:1,borderRadius:3}]},options:{...B,plugins:{...B.plugins,tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.parsed.y} kWh`}}}}});
-  $('mTb').innerHTML=[...months].reverse().map((m,i,arr)=>{const prev=arr[i+1];const d=prev?(((m.kwh-prev.kwh)/prev.kwh)*100).toFixed(1):null;return`<tr><td>${fmtM(m.date)}</td><td class="v">${m.kwh.toFixed(0)}</td><td>${d?`<span style="color:${d>0?'var(--a3)':'var(--green)'}">${d>0?'▲':'▼'}${Math.abs(d)}%</span>`:'—'}</td><td style="color:var(--muted)">${(m.kwh*.2516).toFixed(0)}€</td></tr>`;}).join('');
+// === DAILY CHART ===
+function buildDB(total){const c=$('dBtns'),opts=[7,14,30,90,365].filter(x=>x<=total);if(!opts.includes(total)&&total<365)opts.push(total);const def=Math.min(activePeriod,total);c.innerHTML=opts.map(n=>`<button class="pbtn ${n===def?'active':''}" onclick="drawD(${n},this)">${n>=365?'1AN':n+'J'}</button>`).join('');}
+function drawD(n,btn){if(btn){document.querySelectorAll('#dBtns .pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}kill('d');const sl=AD.daily.slice(-n),labels=sl.map(d=>fr(d.date)),vals=sl.map(d=>d.kwh),avg=vals.reduce((a,v)=>a+v,0)/vals.length;CH['d']=new Chart($('cD').getContext('2d'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:vals.map(v=>v>avg*1.3?'rgba(255,107,53,.75)':'rgba(0,212,255,.6)'),borderColor:vals.map(v=>v>avg*1.3?'#ff6b35':'#00d4ff'),borderWidth:1,borderRadius:3},{type:'line',data:vals.map(()=>+avg.toFixed(2)),borderColor:'rgba(255,107,53,.5)',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false,tension:0}]},options:{...B,plugins:{...B.plugins,tooltip:{...B.plugins.tooltip,callbacks:{label:c=>c.datasetIndex===0?` ${c.parsed.y} kWh`:` Moy: ${avg.toFixed(2)} kWh`}}}}});}
+
+// === LOAD CHART ===
+function buildLB(){const c=$('lBtns');if(!lDays.length){c.innerHTML='<span style="color:var(--muted);font-family:var(--mono);font-size:10px">Activez la collecte horaire</span>';return;}c.innerHTML=lDays.slice(-5).map((d,i,a)=>{const dt=pD(d);return`<button class="pbtn ${i===a.length-1?'active':''}" onclick="drawL('${d}',this)">${dt.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'})}</button>`;}).join('');}
+function drawL(day,btn){if(btn){document.querySelectorAll('#lBtns .pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}kill('l');kill('hp');const slots=AD.loadByDay[day]||[];if(!slots.length)return;const labels=slots.map((s,i)=>i%2===0?`${p(s.dt.getHours())}h`:''),vals=slots.map(s=>+s.w.toFixed(0));const ctx=$('cL').getContext('2d');const g=ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,'rgba(0,128,255,.4)');g.addColorStop(1,'rgba(0,128,255,.02)');CH['l']=new Chart(ctx,{type:'line',data:{labels,datasets:[{data:vals,borderColor:'#0080ff',backgroundColor:g,borderWidth:2,fill:true,tension:.4,pointRadius:0,pointHoverRadius:4}]},options:{...B,plugins:{...B.plugins,tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.parsed.y} W`}}},scales:{...B.scales,y:{...B.scales.y,ticks:{...B.scales.y.ticks,callback:v=>v+'W'}}}}});const hcW=slots.filter(s=>s.dt.getHours()>=22||s.dt.getHours()<6).reduce((a,s)=>a+s.w,0);const hpW=slots.filter(s=>s.dt.getHours()>=6&&s.dt.getHours()<22).reduce((a,s)=>a+s.w,0);CH['hp']=new Chart($('cHP').getContext('2d'),{type:'doughnut',data:{labels:['HC (22h-6h)','HP (6h-22h)'],datasets:[{data:[+(hcW/2000).toFixed(2),+(hpW/2000).toFixed(2)],backgroundColor:['rgba(0,230,118,.7)','rgba(255,107,53,.7)'],borderColor:['#00e676','#ff6b35'],borderWidth:1}]},options:{responsive:true,plugins:{legend:{display:true,position:'bottom',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:8,padding:8}},tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.label}: ${c.parsed.toFixed(2)} kWh`}}}}});$('pkTb').innerHTML=[...vals.map((v,i)=>({v,i}))].sort((a,b)=>b.v-a.v).slice(0,5).map(({v,i})=>{const s=slots[i];return`<tr><td>${p(s.dt.getHours())}:${p(s.dt.getMinutes())}</td><td class="v">${v}W</td></tr>`;}).join('');}
+
+// === MONTHLY ===
+function drawC(){kill('c');const cfg=getCfg();const byM={};for(const d of AD.daily){const k=`${d.date.getFullYear()}-${d.date.getMonth()}`;if(!byM[k])byM[k]={date:new Date(d.date.getFullYear(),d.date.getMonth(),1),kwh:0,days:0};byM[k].kwh+=d.kwh;byM[k].days++;}const months=Object.values(byM).sort((a,b)=>a.date-b.date);const vals=months.map(m=>+m.kwh.toFixed(1));CH['c']=new Chart($('cC').getContext('2d'),{type:'bar',data:{labels:months.map(m=>fmtM(m.date)),datasets:[{data:vals,backgroundColor:vals.map((v,i,a)=>i>0&&v>a[i-1]*1.1?'rgba(255,107,53,.7)':'rgba(0,212,255,.6)'),borderColor:vals.map((v,i,a)=>i>0&&v>a[i-1]*1.1?'#ff6b35':'#00d4ff'),borderWidth:1,borderRadius:3}]},options:{...B,plugins:{...B.plugins,tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.parsed.y} kWh`}}}}});$('mTb').innerHTML=[...months].reverse().map((m,i,arr)=>{const prev=arr[i+1];const d=prev?(((m.kwh-prev.kwh)/prev.kwh)*100).toFixed(1):null;return`<tr><td>${fmtM(m.date)}</td><td class="v">${m.kwh.toFixed(0)}</td><td>${d?`<span style="color:${d>0?'var(--a3)':'var(--green)'}">${d>0?'▲':'▼'}${Math.abs(d)}%</span>`:'—'}</td><td style="color:var(--muted)">${(m.kwh*cfg.base).toFixed(0)}€</td></tr>`;}).join('');}
+
+// ========== ANNUAL TAB ==========
+function buildAnnual(daily){buildCalHeatmap(daily);buildCumul(daily);buildNvsN1(daily);buildQuarterly(daily);buildTrend(daily);}
+
+// --- Calendar Heatmap ---
+function buildCalHeatmap(daily){
+  const byDate={};daily.forEach(d=>{byDate[fmt(d.date)]=d.kwh;});
+  const vals=daily.map(d=>d.kwh),minV=Math.min(...vals),maxV=Math.max(...vals);
+  const years=[...new Set(daily.map(d=>d.date.getFullYear()))].sort();
+  const yc={};daily.forEach(d=>{const y=d.date.getFullYear();yc[y]=(yc[y]||0)+1;});
+  const dy=years.reduce((a,b)=>yc[b]>yc[a]?b:a,years[0]);
+  $('calHeatmap').innerHTML=`<div class="pbtns" id="calYBtns" style="margin-bottom:8px">${years.map(y=>`<button class="pbtn ${y===dy?'active':''}" onclick="drawCalY(${y},this)">${y}</button>`).join('')}</div><div id="calC"></div>`;
+  drawCalY(dy);
+}
+function drawCalY(year,btn){
+  if(btn){document.querySelectorAll('#calYBtns .pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  const byDate={};AD.daily.forEach(d=>{byDate[fmt(d.date)]=d.kwh;});
+  const yData=AD.daily.filter(d=>d.date.getFullYear()===year);
+  if(!yData.length){$('calC').innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">Pas de données pour '+year+'</div>';return;}
+  const vals=yData.map(d=>d.kwh),minV=Math.min(...vals),maxV=Math.max(...vals);
+  const s=new Date(year,0,1),e=new Date(year,11,31);
+  function clr(v){if(v===undefined)return'rgba(30,37,53,.3)';const t=(v-minV)/(maxV-minV||1);if(t<.25)return'rgba(0,212,255,.15)';if(t<.5)return'rgba(0,212,255,.4)';if(t<.75)return'rgba(168,85,247,.45)';return'rgba(255,107,53,.65)';}
+  let weeks=[],cw=[];const d=new Date(s);const f=(d.getDay()+6)%7;for(let i=0;i<f;i++)cw.push(null);
+  while(d<=e){if((d.getDay()+6)%7===0&&cw.length){weeks.push(cw);cw=[];}cw.push(new Date(d));d.setDate(d.getDate()+1);}
+  if(cw.length)weeks.push(cw);
+  // Month labels by first week of each month
+  let mLabels=new Array(weeks.length).fill('');
+  weeks.forEach((w,wi)=>{const vd=w.find(x=>x);if(vd&&vd.getDate()<=7)mLabels[wi]=MN[vd.getMonth()];});
+  let h='<div class="cal-wrap"><div class="cal-months" style="margin-left:28px">';
+  mLabels.forEach(m=>{h+=`<span style="width:13px;font-family:var(--mono);font-size:8px;color:var(--muted);text-align:center">${m}</span>`;});
+  h+='</div><div style="display:flex"><div class="cal-labels">';
+  ['L','','M','','V','','D'].forEach(n=>{h+=`<div class="cal-day-label">${n}</div>`;});
+  h+='</div><div class="cal-weeks">';
+  weeks.forEach(w=>{h+='<div class="cal-week">';for(let i=0;i<7;i++){const day=i<w.length?w[i]:null;if(!day){h+='<div class="cal-cell" style="background:transparent"></div>';continue;}const key=fmt(day);const v=byDate[key];h+=`<div class="cal-cell" style="background:${clr(v)}" data-tip="${fr(day)}: ${v!==undefined?v.toFixed(1)+' kWh':'—'}"></div>`;}h+='</div>';});
+  h+=`</div></div><div class="cal-legend"><span>Moins</span><div class="cal-legend-cell" style="background:rgba(0,212,255,.15)"></div><div class="cal-legend-cell" style="background:rgba(0,212,255,.4)"></div><div class="cal-legend-cell" style="background:rgba(168,85,247,.45)"></div><div class="cal-legend-cell" style="background:rgba(255,107,53,.65)"></div><span>Plus</span><span style="margin-left:12px">${minV.toFixed(1)} → ${maxV.toFixed(1)} kWh</span></div></div>`;
+  $('calC').innerHTML=h;
 }
 
-// ---- TABS ----
-function tab(name){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['Daily','Insights','Load','Compare'][i]===name));
-  document.querySelectorAll('.panel').forEach(pp=>pp.classList.remove('active'));
-  $('p'+name).classList.add('active');
+// --- Cumulative ---
+function buildCumul(daily){
+  const years=[...new Set(daily.map(d=>d.date.getFullYear()))].sort();
+  $('cumulBtns').innerHTML=years.map((y,i)=>`<button class="pbtn ${i===years.length-1?'active':''}" onclick="drawCumul(${y},this)">${y}</button>`).join('')+`<button class="pbtn" onclick="drawCumulAll(this)">Tous</button>`;
+  drawCumul(years[years.length-1]);
+}
+function drawCumul(year,btn){
+  if(btn){document.querySelectorAll('#cumulBtns .pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  kill('cumul');const yD=AD.daily.filter(d=>d.date.getFullYear()===year);let c=0;const labels=yD.map(d=>{const m=d.date.getMonth();const dd=d.date.getDate();return dd===1||dd===15?`${dd}/${p(m+1)}`:'';});const vals=yD.map(d=>{c+=d.kwh;return+c.toFixed(1);});
+  const ctx=$('cCumul').getContext('2d');const g=ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,'rgba(0,212,255,.3)');g.addColorStop(1,'rgba(0,212,255,.02)');
+  CH['cumul']=new Chart(ctx,{type:'line',data:{labels,datasets:[{data:vals,borderColor:'#00d4ff',backgroundColor:g,borderWidth:2,fill:true,tension:.3,pointRadius:0,pointHoverRadius:3}]},options:{...B,plugins:{...B.plugins,tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.parsed.y} kWh cumulés`}}}}});
+}
+function drawCumulAll(btn){
+  if(btn){document.querySelectorAll('#cumulBtns .pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  kill('cumul');const years=[...new Set(AD.daily.map(d=>d.date.getFullYear()))].sort();
+  const colors=['#00d4ff','#ff6b35','#00e676','#a855f7'];
+  const datasets=years.map((y,i)=>{const yD=AD.daily.filter(d=>d.date.getFullYear()===y);let c=0;return{label:''+y,data:yD.map(d=>{c+=d.kwh;return+c.toFixed(1);}),borderColor:colors[i%4],borderWidth:2,tension:.3,pointRadius:0,fill:false};});
+  const maxL=Math.max(...datasets.map(d=>d.data.length));const labels=Array.from({length:maxL},(_,i)=>`J${i+1}`);
+  CH['cumul']=new Chart($('cCumul').getContext('2d'),{type:'line',data:{labels,datasets},options:{...B,plugins:{...B.plugins,legend:{display:true,position:'top',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:10,padding:10}}}}});
 }
 
-// ---- INIT ----
-(()=>{
-  // Default 30j
-  const e=new Date();e.setDate(e.getDate()-1);const s=new Date(e);s.setDate(s.getDate()-29);
-  $('ds').value=fmt(s);$('de').value=fmt(e);chk();
-  chk();
-})();
+// --- N vs N-1 ---
+function buildNvsN1(daily){
+  kill('nvsn1');const years=[...new Set(daily.map(d=>d.date.getFullYear()))].sort();
+  if(years.length<2){$('nvsn1Summary').innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--muted)">2 ans minimum requis</div>';return;}
+  const y1=years[years.length-2],y2=years[years.length-1];
+  const byYM={};daily.forEach(d=>{const k=`${d.date.getFullYear()}-${d.date.getMonth()}`;if(!byYM[k])byYM[k]={y:d.date.getFullYear(),m:d.date.getMonth(),sum:0};byYM[k].sum+=d.kwh;});
+  const d1=Array(12).fill(0),d2=Array(12).fill(0);
+  Object.values(byYM).forEach(v=>{if(v.y===y1)d1[v.m]=+v.sum.toFixed(0);if(v.y===y2)d2[v.m]=+v.sum.toFixed(0);});
+  CH['nvsn1']=new Chart($('cNvsN1').getContext('2d'),{type:'bar',data:{labels:MN,datasets:[{label:''+y1,data:d1,backgroundColor:'rgba(90,100,128,.5)',borderColor:'#5a6480',borderWidth:1,borderRadius:3},{label:''+y2,data:d2,backgroundColor:'rgba(0,212,255,.6)',borderColor:'#00d4ff',borderWidth:1,borderRadius:3}]},options:{...B,plugins:{...B.plugins,legend:{display:true,position:'top',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:10,padding:10}},tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y} kWh`}}}}});
+  const t1=d1.reduce((a,v)=>a+v,0),t2=d2.reduce((a,v)=>a+v,0),diff=t2-t1,pct=t1?((diff/t1)*100).toFixed(1):0;
+  const col=diff>0?'var(--a3)':'var(--green)',arr=diff>0?'▲':'▼';
+  $('nvsn1Summary').innerHTML=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px"><div><span style="color:var(--muted)">${y1}:</span> ${t1} kWh</div><div><span style="color:var(--muted)">${y2}:</span> <span class="v">${t2} kWh</span></div><div><span style="color:${col}">${arr} ${Math.abs(pct)}%</span> <span style="color:var(--muted)">(${diff>0?'+':''}${diff} kWh)</span></div></div>`;
+}
+
+// --- Quarterly ---
+function buildQuarterly(daily){
+  kill('quarter');const Q=[{n:'T1',m:[0,1,2]},{n:'T2',m:[3,4,5]},{n:'T3',m:[6,7,8]},{n:'T4',m:[9,10,11]}];
+  const qD=Q.map(q=>({name:q.n,sum:+daily.filter(d=>q.m.includes(d.date.getMonth())).reduce((a,d)=>a+d.kwh,0).toFixed(0)}));
+  CH['quarter']=new Chart($('cQuarter').getContext('2d'),{type:'doughnut',data:{labels:qD.map(q=>q.name),datasets:[{data:qD.map(q=>q.sum),backgroundColor:['rgba(0,212,255,.7)','rgba(0,230,118,.7)','rgba(255,214,0,.7)','rgba(255,107,53,.7)'],borderWidth:1}]},options:{responsive:true,plugins:{legend:{display:true,position:'bottom',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:8,padding:8}},tooltip:{...B.plugins.tooltip,callbacks:{label:c=>` ${c.label}: ${c.parsed} kWh`}}}}});
+}
+
+// --- Trend + Forecast ---
+function buildTrend(daily){
+  kill('trend');const byM={};daily.forEach(d=>{const k=`${d.date.getFullYear()}-${p(d.date.getMonth()+1)}`;if(!byM[k])byM[k]={date:new Date(d.date.getFullYear(),d.date.getMonth(),1),sum:0};byM[k].sum+=d.kwh;});
+  const months=Object.values(byM).sort((a,b)=>a.date-b.date);const labels=months.map(m=>MN[m.date.getMonth()]+String(m.date.getFullYear()).slice(2));const vals=months.map(m=>+m.sum.toFixed(0));
+  const n=vals.length,xM=(n-1)/2,yM=vals.reduce((a,v)=>a+v,0)/n;let num=0,den=0;vals.forEach((y,i)=>{num+=(i-xM)*(y-yM);den+=(i-xM)**2;});const slope=den?num/den:0,intercept=yM-slope*xM;
+  const fLabels=[],fVals=[];const last=months[n-1]?.date||new Date();
+  for(let i=1;i<=3;i++){const fd=new Date(last);fd.setMonth(fd.getMonth()+i);fLabels.push(MN[fd.getMonth()]+String(fd.getFullYear()).slice(2));fVals.push(Math.max(0,Math.round(intercept+slope*(n-1+i))));}
+  const allL=[...labels,...fLabels],tLine=allL.map((_,i)=>Math.max(0,Math.round(intercept+slope*i)));
+  CH['trend']=new Chart($('cTrend').getContext('2d'),{type:'line',data:{labels:allL,datasets:[{label:'Réel',data:[...vals,...Array(3).fill(null)],borderColor:'#00d4ff',borderWidth:2,tension:.3,pointRadius:2,fill:false},{label:'Prévision',data:[...Array(n).fill(null),...fVals],borderColor:'#ff6b35',borderDash:[5,3],borderWidth:2,tension:.3,pointRadius:3,fill:false},{label:'Tendance',data:tLine,borderColor:'rgba(168,85,247,.4)',borderDash:[3,3],borderWidth:1,pointRadius:0,fill:false}]},options:{...B,plugins:{...B.plugins,legend:{display:true,position:'top',labels:{color:'#5a6480',font:{family:'Space Mono',size:9},boxWidth:10,padding:8}}}}});
+}
+
+// ========== BUDGET TAB ==========
+function buildBudget(daily){buildTariffCompare(daily);buildBudgetMonthly(daily);buildInvoice(daily);}
+function recalcBudget(){if(!AD.daily?.length)return;const cfg=getCfg(),tot=AD.daily.reduce((a,d)=>a+d.kwh,0);$('k4').innerHTML=`${(tot*cfg.base).toFixed(0)}<span class="ku">€</span>`;buildBudget(AD.daily);const avg=tot/AD.daily.length,projCost=avg*365*cfg.base+cfg.abo+cfg.cta;$('projNum').innerHTML=`${Math.round(projCost)}<span style="font-size:14px;color:var(--muted);font-weight:400"> €</span>`;$('projLabel').textContent=`${Math.round(avg*365)} kWh/an`;$('projDesc').textContent=`${avg.toFixed(1)} kWh/j · Abo+CTA inclus`;drawC();}
+
+function buildTariffCompare(daily){
+  const cfg=getCfg(),avg=daily.reduce((a,d)=>a+d.kwh,0)/daily.length,aKwh=avg*365;
+  const cBase=aKwh*cfg.base+cfg.abo+cfg.cta;
+  const hpR=.62,hcR=.38,aboHPHC=183.60;
+  const cHPHC=aKwh*hpR*cfg.hp+aKwh*hcR*cfg.hc+aboHPHC+cfg.cta;
+  const tB=0.1369,tBHP=0.1609,tW=0.1486,tWHP=0.1894,tR=0.2907,tRHP=0.7562;
+  const cTempo=(aKwh*300/365)*(tB*.4+tBHP*.6)+(aKwh*43/365)*(tW*.4+tWHP*.6)+(aKwh*22/365)*(tR*.4+tRHP*.6)+150.48+cfg.cta;
+  const costs=[{n:'Base',c:cBase,s:`${cfg.base}€/kWh`},{n:'HP/HC',c:cHPHC,s:`HP ${cfg.hp}€ · HC ${cfg.hc}€`},{n:'Tempo',c:cTempo,s:'Variable/jour'}];
+  const best=costs.reduce((a,b)=>b.c<a.c?b:a);
+  $('tariffCompare').innerHTML=costs.map(c=>{const ib=c===best;return`<div class="tariff-card ${ib?'best':''}"><div class="tariff-name">${c.n}</div><div class="tariff-price" style="color:${ib?'var(--green)':'var(--text)'}">${Math.round(c.c)}€</div><div class="tariff-sub">${c.s}</div><div class="tariff-sub">${Math.round(aKwh)} kWh/an</div>${ib?'<div class="tariff-badge">✓ Meilleur choix</div>':`<div style="font-family:var(--mono);font-size:9px;color:var(--a3);margin-top:6px">+${Math.round(c.c-best.c)}€/an</div>`}</div>`;}).join('');
+}
+
+function buildBudgetMonthly(daily){
+  const cfg=getCfg();const byM={};daily.forEach(d=>{const k=`${d.date.getFullYear()}-${p(d.date.getMonth()+1)}`;if(!byM[k])byM[k]={date:new Date(d.date.getFullYear(),d.date.getMonth(),1),sum:0};byM[k].sum+=d.kwh;});
+  const months=Object.values(byM).sort((a,b)=>a.date-b.date);
+  $('budgetMonthly').innerHTML=months.map(m=>{
+    const cost=m.sum*cfg.base+cfg.abo/12+cfg.cta/12;const pct=Math.min(140,(cost/cfg.budget)*100);const over=cost>cfg.budget;const col=over?'var(--a3)':'var(--green)';
+    return`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;margin-bottom:2px"><span style="color:var(--muted)">${MNF[m.date.getMonth()]} ${m.date.getFullYear()}</span><span style="color:${col}">${cost.toFixed(0)}€ / ${cfg.budget}€ ${over?'⚠️':''}</span></div><div class="budget-track"><div class="budget-fill" style="width:${Math.min(100,pct)}%;background:${over?'rgba(255,107,53,.5)':'rgba(0,230,118,.4)'}"></div><div class="budget-marker" style="left:${100/140*100}%"></div></div></div>`;
+  }).join('');
+}
+
+function buildInvoice(daily){
+  const cfg=getCfg();const byM={};daily.forEach(d=>{const k=`${d.date.getFullYear()}-${p(d.date.getMonth()+1)}`;if(!byM[k])byM[k]={date:new Date(d.date.getFullYear(),d.date.getMonth(),1),sum:0};byM[k].sum+=d.kwh;});
+  const months=Object.values(byM).sort((a,b)=>a.date-b.date);const aboM=cfg.abo/12,ctaM=cfg.cta/12;
+  let tK=0,tC=0,tA=0,tT=0;
+  $('invoiceTable').innerHTML=months.map(m=>{const ce=m.sum*cfg.base,ae=aboM+ctaM,tot=ce+ae,over=tot>cfg.budget;tK+=m.sum;tC+=ce;tA+=ae;tT+=tot;return`<tr><td>${MN[m.date.getMonth()]} ${String(m.date.getFullYear()).slice(2)}</td><td class="v">${m.sum.toFixed(0)}</td><td>${ce.toFixed(0)}€</td><td style="color:var(--muted)">${ae.toFixed(0)}€</td><td style="font-weight:700">${tot.toFixed(0)}€</td><td>${over?'<span style="color:var(--a3)">⚠️</span>':'<span style="color:var(--green)">✓</span>'}</td></tr>`;}).join('');
+  $('invoiceFoot').innerHTML=`<tr style="border-top:2px solid var(--border);font-weight:700"><td>TOTAL</td><td class="v">${tK.toFixed(0)}</td><td>${tC.toFixed(0)}€</td><td style="color:var(--muted)">${tA.toFixed(0)}€</td><td style="color:var(--accent);font-size:13px">${tT.toFixed(0)}€</td><td></td></tr>`;
+}
+
+// === EXPORT ===
+function exportCSV(){
+  if(!AD.daily?.length)return;const cfg=getCfg();
+  let csv='Date;kWh;Cout_EUR;Jour\n';
+  AD.daily.forEach(d=>{csv+=`${fmt(d.date)};${d.kwh};${(d.kwh*cfg.base).toFixed(4)};${['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.date.getDay()]}\n`;});
+  csv+='\nRecap_Mensuel\nMois;kWh;Total_EUR\n';
+  const byM={};AD.daily.forEach(d=>{const k=fmtM(d.date);byM[k]=(byM[k]||0)+d.kwh;});
+  Object.entries(byM).forEach(([m,kwh])=>{csv+=`${m};${kwh.toFixed(1)};${(kwh*cfg.base+cfg.abo/12+cfg.cta/12).toFixed(1)}\n`;});
+  dl(csv,'electropdl_export.csv','text/csv;charset=utf-8');
+}
+function exportJSON(){
+  if(!AD.daily?.length)return;const cfg=getCfg();
+  dl(JSON.stringify({date:new Date().toISOString(),config:cfg,daily:AD.daily.map(d=>({date:fmt(d.date),kwh:d.kwh})),summary:{total:AD.daily.reduce((a,d)=>a+d.kwh,0),avg:AD.daily.reduce((a,d)=>a+d.kwh,0)/AD.daily.length,days:AD.daily.length}},null,2),'electropdl_export.json','application/json');
+}
+function dl(content,name,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=name;a.click();}
+
+// === TABS ===
+const TN=['Daily','Insights','Load','Compare','Annual','Budget'];
+function tab(name){document.querySelectorAll('#mainTabs .tab').forEach((t,i)=>t.classList.toggle('active',TN[i]===name));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$('p'+name).classList.add('active');}
+
+// === INIT ===
+(()=>{const e=new Date();e.setDate(e.getDate()-1);const s=new Date(e);s.setDate(s.getDate()-29);$('ds').value=fmt(s);$('de').value=fmt(e);chk();})();
 </script>
 </body>
 </html>
